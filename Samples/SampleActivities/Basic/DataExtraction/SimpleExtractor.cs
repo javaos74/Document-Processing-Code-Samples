@@ -31,6 +31,9 @@ namespace SampleActivities.Basic.DataExtraction
 #if DEBUG
             Console.WriteLine("GetCapabilities called");
 #endif
+            // call kakao ml api for field description 
+            // make extract document type capability with kakao ml fields info 
+
             List<ExtractorFieldCapability> fields = new List<ExtractorFieldCapability>();
 
             fields.Add(new ExtractorFieldCapability { FieldId = "m_name", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
@@ -73,6 +76,10 @@ namespace SampleActivities.Basic.DataExtraction
         {
             var extractorResult = new ExtractorResult();
             var resultsDataPoints = new List<ResultsDataPoint>();
+
+            // call kakao ml extractor with documentPath 
+            // match taxonomy fields with kakao ml field 
+            // create result data 
 
             // example of reporting a value with derived parts
             Field firstDateField = documentType.Fields.FirstOrDefault(f => f.Type == FieldType.Date);
