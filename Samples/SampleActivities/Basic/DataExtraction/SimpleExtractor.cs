@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Activities;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using UiPath.DocumentProcessing.Contracts;
@@ -11,11 +12,52 @@ using UiPath.DocumentProcessing.Contracts.Taxonomy;
 
 namespace SampleActivities.Basic.DataExtraction
 {
+    [DisplayName("Charles Extractor")]
     public class SimpleExtractor : ExtractorAsyncCodeActivity
     {
+        [Category("Custom Model")]
+        [RequiredArgument]
+        [Description("ML모델 서비스 endpoint 정보")]
+        public InArgument<string> Endpoint { get; set; }
+
+        [Category("Custom Model")]
+        [RequiredArgument]
+        [Description("ML모델 서비스 endpoint Api Key정보 ")]
+        public InArgument<string> ApiKey { get; set; }
+
         public override Task<ExtractorDocumentTypeCapabilities[]> GetCapabilities()
         {
-            return Task.FromResult(new ExtractorDocumentTypeCapabilities[0]);
+#if DEBUG
+            Console.WriteLine("GetCapabilities called");
+#endif
+            // call kakao ml api for field description 
+            // make extract document type capability with kakao ml fields info 
+
+            List<ExtractorFieldCapability> fields = new List<ExtractorFieldCapability>();
+
+            fields.Add(new ExtractorFieldCapability { FieldId = "m_name", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "m_age", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "m_birth-date", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "m_family", Components = new[] {
+                new ExtractorFieldCapability {FieldId = "m_name", Components = new ExtractorFieldCapability[0], SetValues = new string[0]},
+                new ExtractorFieldCapability {FieldId = "m_relation", Components = new ExtractorFieldCapability[0], SetValues = new string[0]},
+                new ExtractorFieldCapability {FieldId = "m_birth-date", Components = new ExtractorFieldCapability[0], SetValues = new string[0]},
+                }, SetValues = new string[0] });
+            return Task.FromResult( new[] { 
+                new ExtractorDocumentTypeCapabilities{
+                    DocumentTypeId = "charles.doc.type",
+                    Fields = fields.ToArray()
+                }
+            });
+            //return Task.FromResult(new ExtractorDocumentTypeCapabilities[0]);
+
+        }
+        public override Boolean ProvidesCapabilities()
+        {
+#if DEBUG
+            Console.WriteLine("ProvidesCapabilities called");
+#endif
+            return true;
         }
 
         protected override IAsyncResult BeginExecute(AsyncCodeActivityContext context, AsyncCallback callback, object state)
@@ -38,6 +80,10 @@ namespace SampleActivities.Basic.DataExtraction
         {
             var extractorResult = new ExtractorResult();
             var resultsDataPoints = new List<ResultsDataPoint>();
+
+            // call kakao ml extractor with documentPath 
+            // match taxonomy fields with kakao ml field 
+            // create result data 
 
             // example of reporting a value with derived parts
             Field firstDateField = documentType.Fields.FirstOrDefault(f => f.Type == FieldType.Date);

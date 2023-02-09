@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net461;net6.0-windows7.0;net6.0</TargetFrameworks>
@@ -7,11 +7,11 @@
 	<OutputPath>$(ProjectDir)..\Output\SampleActivities</OutputPath>
     <DefineConstants Condition="'$(TargetFramework)' == 'net6.0'">$(DefineConstants);NETSTANDARD;NETPORTABLE_UIPATH</DefineConstants>
 
-	<PackageId>SampleActivities</PackageId>
+	<PackageId>CustomDUActivities</PackageId>
 	<PackageVersion>$(Version)</PackageVersion>
-	<Title>UiPath Sample Activities</Title>
+	<Title>UiPath Custom DU Activities</Title>
 	<Authors>UiPath</Authors>
-	<Description>UiPath Document Understanding Sample Activities.</Description>
+	<Description>UiPath Document Understanding Custom DU Activities.</Description>
 	<PackageOutputPath>$(ProjectDir)..\Output\Packages</PackageOutputPath>
 	<GeneratePackageOnBuild Condition="'$(Configuration)' == 'Debug'">true</GeneratePackageOnBuild>
 	<GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">false</GeneratePackageOnBuild>
@@ -19,7 +19,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-	<Product>SampleActivities</Product>
+	<Product>CustomDUActivities</Product>
 	<VersionMajor>1</VersionMajor>
 	<VersionMinor>0</VersionMinor>
 	<VersionBuild>0</VersionBuild>
@@ -49,8 +49,8 @@
 	<PackageReference Include="System.Drawing.Common" Version="5.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.17.1" />
-    <PackageReference Include="UiPath.OCR.Contracts" Version="2.13.0" />
+    <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.18.0" />
+    <PackageReference Include="UiPath.OCR.Contracts" Version="2.14.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0-windows7.0' ">
