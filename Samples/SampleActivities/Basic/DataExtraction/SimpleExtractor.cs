@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,9 +12,8 @@ using UiPath.DocumentProcessing.Contracts.Taxonomy;
 
 namespace SampleActivities.Basic.DataExtraction
 {
-
     [DisplayName("Charles Extractor")]
-    public class SimpleExtractor : ExtractorCodeActivity
+    public class SimpleExtractor : ExtractorAsyncCodeActivity
     {
         [Category("Custom Model")]
         [RequiredArgument]
@@ -61,7 +60,12 @@ namespace SampleActivities.Basic.DataExtraction
             return true;
         }
 
-        protected override void Execute(CodeActivityContext context)
+        protected override IAsyncResult BeginExecute(AsyncCodeActivityContext context, AsyncCallback callback, object state)
+        {
+            return null;
+        }
+
+        protected override void EndExecute(AsyncCodeActivityContext context, IAsyncResult result)
         {
             ExtractorDocumentType documentType = ExtractorDocumentType.Get(context);
             ResultsDocumentBounds documentBounds = DocumentBounds.Get(context);
