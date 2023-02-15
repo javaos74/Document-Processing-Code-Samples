@@ -25,6 +25,8 @@ namespace SampleActivities.Basic.DataExtraction
         [Description("ML모델 서비스 endpoint Api Key정보 ")]
         public InArgument<string> ApiKey { get; set; }
 
+        ExtractorResult result;
+
         public override Task<ExtractorDocumentTypeCapabilities[]> GetCapabilities()
         {
 #if DEBUG
@@ -62,21 +64,44 @@ namespace SampleActivities.Basic.DataExtraction
 
         protected override IAsyncResult BeginExecute(AsyncCodeActivityContext context, AsyncCallback callback, object state)
         {
-            return null;
-        }
-
-        protected override void EndExecute(AsyncCodeActivityContext context, IAsyncResult result)
-        {
+            //get arguments passed to DataExtractionScope 
             ExtractorDocumentType documentType = ExtractorDocumentType.Get(context);
             ResultsDocumentBounds documentBounds = DocumentBounds.Get(context);
             string text = DocumentText.Get(context);
             Document document = DocumentObjectModel.Get(context);
             string documentPath = DocumentPath.Get(context);
+            string endpoint = Endpoint.Get(context);
+            string apiKey = ApiKey.Get(context);
 
-            ExtractorResult.Set(context, ComputeResult(documentType, documentBounds, text, document, documentPath));
+            var task = new Task(_ => Execute(documentType, documentBounds, text, document, documentPath, endpoint, apiKey), state);
+            task.Start();
+            if (callback != null)
+                task.ContinueWith(s => callback(s));
+            return task;
         }
 
-        private ExtractorResult ComputeResult(ExtractorDocumentType documentType, ResultsDocumentBounds documentBounds, string text, Document document, string documentPath)
+        protected override async void EndExecute(AsyncCodeActivityContext context, IAsyncResult result)
+        {
+            var task = (Task)result;
+#if DEBUG
+            Debug.WriteLine($"task.IsCompleted: {task.IsCompleted}");
+#endif
+            ExtractorResult.Set(context, this.result);
+            await task;
+        }
+
+
+        protected async void Execute(ExtractorDocumentType documentType, ResultsDocumentBounds documentBounds,
+                            string text, Document document, string documentPath,
+                            string endPoint, string apiKey)
+        {
+#if DEBUG
+            Debug.WriteLine("Executel called with parameters");
+#endif
+            this.result = await ComputeResult(documentType, documentBounds, text, document, documentPath, endPoint, apiKey);
+        }
+
+        private async Task<ExtractorResult> ComputeResult(ExtractorDocumentType documentType, ResultsDocumentBounds documentBounds, string text, Document document, string documentPath, string endpoint, string apiKey)
         {
             var extractorResult = new ExtractorResult();
             var resultsDataPoints = new List<ResultsDataPoint>();
