@@ -31,8 +31,8 @@ namespace SampleActivities.Basic.DataExtraction
         }
     }
 
-    [DisplayName("Charles Extractor")]
-    public class SimpleExtractor : ExtractorAsyncCodeActivity
+    [DisplayName("Charles Azure-Invoice Extractor")]
+    public class AzureInvoice : ExtractorAsyncCodeActivity
     {
         [Category("Custom Model")]
         [RequiredArgument]
@@ -58,7 +58,6 @@ namespace SampleActivities.Basic.DataExtraction
 
             fields.Add(new ExtractorFieldCapability { FieldId = "CustomerName", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
             fields.Add(new ExtractorFieldCapability { FieldId = "CustomerId", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "PurchaseOrder", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
             fields.Add(new ExtractorFieldCapability { FieldId = "PurchaseOrder", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
             fields.Add(new ExtractorFieldCapability { FieldId = "InvoiceId", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
             fields.Add(new ExtractorFieldCapability { FieldId = "InvoiceDate", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
@@ -174,21 +173,30 @@ namespace SampleActivities.Basic.DataExtraction
             for (int i = 0; i < result.Documents.Count; i++)
             {
                 AnalyzedDocument azformdoc = result.Documents[i];
-                foreach (var field in documentType.Fields)
+                foreach (var du_field in documentType.Fields)
                 {
-                    if ( azformdoc.Fields.TryGetValue(field.FieldId, out DocumentField outField))
+                    if ( azformdoc.Fields.TryGetValue(du_field.FieldId, out DocumentField out_az_field))
                     {
-                        if (field.Type == FieldType.Text)
+                        if (du_field.Type == FieldType.Text)
                         {
-                            resultsDataPoints.Add(CreateTextFieldDataPoint(field, outField, dom, pages.ToArray()));
+                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
+#if DEBUG
+                            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(out_az_field));
+#endif
                         }
-                        else if (field.Type == FieldType.Date)
+                        else if (du_field.Type == FieldType.Date)
                         {
-                            resultsDataPoints.Add(CreateDateFieldDataPoint(field, outField, dom, pages.ToArray()));
+                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
+#if DEBUG
+                            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(out_az_field));
+#endif
                         }
-                        else if (field.Type == FieldType.Number)
+                        else if (du_field.Type == FieldType.Number)
                         {
-                            resultsDataPoints.Add(CreateNumberFieldDataPoint(field, outField, dom, pages.ToArray()));
+                            resultsDataPoints.Add(CreateNumberFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
+#if DEBUG
+                            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(out_az_field));
+#endif
                         }
                         /*
                         else if( field.Type == FieldType.Table)
@@ -243,14 +251,14 @@ namespace SampleActivities.Basic.DataExtraction
                 new[] { resultValue });
         }
 
-        private static ResultsDataPoint CreateTextFieldDataPoint(Field field, DocumentField mlfield, Document dom, PageLayout[] pages )
+        private static ResultsDataPoint CreateTextFieldDataPoint(Field du_field, DocumentField azfield, Document dom, PageLayout[] pages )
         {
             // how to map word index, now just default 0 
-            var resultValue = CreateResultsValue(0, dom, mlfield, pages);
+            var resultValue = CreateResultsValue(0, dom, azfield, pages);
             return new ResultsDataPoint(
-                field.FieldId,
-                field.FieldName,
-                field.Type,
+                du_field.FieldId,
+                du_field.FieldName,
+                du_field.Type,
                 new[] { resultValue });
         }
         private static ResultsDataPoint CreateNumberFieldDataPoint(Field field, DocumentField mlfield , Document dom, PageLayout[] pages)
@@ -310,13 +318,13 @@ namespace SampleActivities.Basic.DataExtraction
                 new[] { tableValue });
         }
 
-        private static ResultsValue CreateResultsValue(int wordIndex, Document dom, DocumentField mlfield, PageLayout [] pages)
+        private static ResultsValue CreateResultsValue(int wordIndex, Document dom, DocumentField az_field, PageLayout [] pages)
         {
             //TODO - find match word with BoundingBox 
             var word = dom.Pages[0].Sections.SelectMany(s => s.WordGroups).SelectMany(w => w.Words).ToArray()[wordIndex];
             List<Box> boxes = new List<Box>();
             List<ResultsValueTokens> tokens = new List<ResultsValueTokens>();
-            foreach( var x in mlfield.BoundingRegions)
+            foreach( var x in az_field.BoundingRegions)
             {
                 PointF[] points = x.BoundingPolygon.ToArray().Select( p =>  new PointF((float)ConvertSize(p.X, pages[x.PageNumber - 1].Width, dom.Pages[x.PageNumber-1].Size.Width),
                                                                                         (float)ConvertSize(p.Y, pages[x.PageNumber - 1].Height, dom.Pages[x.PageNumber - 1].Size.Height))).ToArray();
@@ -329,7 +337,7 @@ namespace SampleActivities.Basic.DataExtraction
             }
             //var wordValueToken = new ResultsValueTokens(word.IndexInText, word.Text.Length, 0, (float)dom.Pages[0].Size.Width, (float)dom.Pages[0].Size.Height, boxes.ToArray());
             var reference = new ResultsContentReference(word.IndexInText, word.Text.Length, tokens.ToArray());
-            return new ResultsValue(mlfield.Content ?? word.Text, reference, (float)mlfield.Confidence, 0.0f); // word.OcrConfidence);
+            return new ResultsValue(az_field.Content ?? word.Text, reference, (float)az_field.Confidence, 0.0f); // word.OcrConfidence);
         }
 
         private static ResultsValue CreateResultsValue2(int wordIndex, Document dom, string value = null)

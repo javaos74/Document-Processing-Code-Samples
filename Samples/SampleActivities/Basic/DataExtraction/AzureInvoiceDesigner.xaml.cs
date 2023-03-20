@@ -4,9 +4,9 @@ namespace SampleActivities.Basic.DataExtraction
     /// <summary>
     /// Interaction logic for SimpleExtractorDesigner.xaml
     /// </summary>
-    public partial class SimpleExtractorDesigner
+    public partial class AzureInvoiceDesigner
     {
-        public SimpleExtractorDesigner()
+        public AzureInvoiceDesigner()
         {
             InitializeComponent();
         }

@@ -15,18 +15,18 @@ namespace SampleActivities
 
             // Designers
             var simpleClassifierDesigner = new DesignerAttribute(typeof(SimpleClassifierDesigner));
-            var simpleExtractorDesigner = new DesignerAttribute(typeof(SimpleExtractorDesigner));
+            var azureInvoiceDesigner = new DesignerAttribute(typeof(AzureInvoiceDesigner));
 
             //Categories
             var classifierCategoryAttribute = new CategoryAttribute("Sample Classifiers");
-            var extractorCategoryAttribute = new CategoryAttribute("Sample Extractors");
+            var extractorCategoryAttribute = new CategoryAttribute("Azure Extractors");
             var ocrCategoryAttribute = new CategoryAttribute("Sample OCR Engines");
 
             builder.AddCustomAttributes(typeof(SimpleClassifier), classifierCategoryAttribute);
             builder.AddCustomAttributes(typeof(SimpleClassifier), simpleClassifierDesigner);
 
-            builder.AddCustomAttributes(typeof(SimpleExtractor), extractorCategoryAttribute);
-            builder.AddCustomAttributes(typeof(SimpleExtractor), simpleExtractorDesigner);
+            builder.AddCustomAttributes(typeof(AzureInvoice), extractorCategoryAttribute);
+            builder.AddCustomAttributes(typeof(AzureInvoice), azureInvoiceDesigner);
 
             builder.AddCustomAttributes(typeof(SimpleOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(SimpleOCREngine), nameof(SimpleOCREngine.Result), new CategoryAttribute("Output"));
