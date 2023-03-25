@@ -293,7 +293,7 @@ namespace SampleActivities.Basic.DataExtraction
         private static ResultsDataPoint CreateTableFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages )
         {
             int i = 0;
-
+            float confidence = 1.0f;
             List<IEnumerable<ResultsDataPoint>> rows = new List<IEnumerable<ResultsDataPoint>>();
             if ( az_field.FieldType == DocumentFieldType.List)
             {
@@ -301,12 +301,13 @@ namespace SampleActivities.Basic.DataExtraction
                 {
                     var row = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type,
                                                                 new[] { CreateRowResultsValue(i++, c, dom, az_item, pages.ToArray())}));
+                    confidence = Math.Min(confidence, (float)az_item.Confidence);
                     rows.Add(row);
                 }
             }
             var headerCells = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateResultsValue(i++, dom, az_field, pages) }));
 
-            var tableValue = ResultsValue.CreateTableValue(du_field, headerCells, rows.ToArray(), 0.9f, 1f);
+            var tableValue = ResultsValue.CreateTableValue(du_field, headerCells, rows.ToArray(), confidence, 0.0f);
 
             return new ResultsDataPoint(
                 du_field.FieldId,
