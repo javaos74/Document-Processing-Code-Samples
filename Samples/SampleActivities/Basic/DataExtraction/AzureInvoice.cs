@@ -181,7 +181,7 @@ namespace SampleActivities.Basic.DataExtraction
                         {
                             resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
 #if DEBUG
-                            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(out_az_field));
+                            Console.WriteLine(du_field.FieldName + ": " + Newtonsoft.Json.JsonConvert.SerializeObject(out_az_field));
 #endif
                         }
                         else if (du_field.Type == FieldType.Date)
@@ -198,11 +198,11 @@ namespace SampleActivities.Basic.DataExtraction
                             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(out_az_field));
 #endif
                         }
-                        /*
-                        else if( field.Type == FieldType.Table)
+                        
+                        else if( du_field.Type == FieldType.Table)
                         {
-                            resultsDataPoints.Add(CreateTableFieldDataPoint(field, outField, dom));
-                        }*/
+                            resultsDataPoints.Add(CreateTableFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
+                        }
                     }
                 }
             }
@@ -240,104 +240,156 @@ namespace SampleActivities.Basic.DataExtraction
             return extractorResult;
         }
 
-        private static ResultsDataPoint CreateTextFieldDataPoint(Field field, Document dom, PageLayout []pages, string value = null)
+        private static ResultsDataPoint CreateTextFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages )
         {
             // how to map word index, now just default 0 
-            var resultValue = CreateResultsValue2(0, dom, value);
-            return new ResultsDataPoint(
-                field.FieldId,
-                field.FieldName,
-                field.Type,
-                new[] { resultValue });
-        }
-
-        private static ResultsDataPoint CreateTextFieldDataPoint(Field du_field, DocumentField azfield, Document dom, PageLayout[] pages )
-        {
-            // how to map word index, now just default 0 
-            var resultValue = CreateResultsValue(0, dom, azfield, pages);
+            var resultValue = CreateResultsValue(0, dom, az_field, pages);
             return new ResultsDataPoint(
                 du_field.FieldId,
                 du_field.FieldName,
                 du_field.Type,
                 new[] { resultValue });
         }
-        private static ResultsDataPoint CreateNumberFieldDataPoint(Field field, DocumentField mlfield , Document dom, PageLayout[] pages)
+        private static ResultsDataPoint CreateNumberFieldDataPoint(Field du_field, DocumentField az_field , Document dom, PageLayout[] pages)
         {
-            float _num  = mlfield.FieldType == DocumentFieldType.Double ? (float) mlfield.Value.AsDouble() : float.Parse(mlfield .Value.AsString());
+            float _num  = az_field.FieldType == DocumentFieldType.Double ? (float) az_field.Value.AsDouble() : float.Parse(az_field .Value.AsString());
             var derivedFields = ResultsDerivedField.CreateDerivedFieldsForNumber( _num);
-            var resultValue = CreateResultsValue(0, dom, mlfield, pages);
+            var resultValue = CreateResultsValue(0, dom, az_field, pages);
             resultValue.DerivedFields = derivedFields;
             return new ResultsDataPoint(
-                field.FieldId,
-                field.FieldName,
-                field.Type,
+                du_field.FieldId,
+                du_field.FieldName,
+                du_field.Type,
                 new[] { resultValue });
         }
-        private static ResultsDataPoint CreateDateFieldDataPoint(Field field, DocumentField mlfield, Document dom, PageLayout[] pages)
+        private static ResultsDataPoint CreateDateFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages)
         {
             // TODO
-            DateTimeOffset _date = mlfield.FieldType == DocumentFieldType.Date ? mlfield.Value.AsDate() : DateTimeOffset.Parse(mlfield.Content);
+            DateTimeOffset _date = az_field.FieldType == DocumentFieldType.Date ? az_field.Value.AsDate() : DateTimeOffset.Parse(az_field.Content);
             var derivedFields = ResultsDerivedField.CreateDerivedFieldsForDate( _date.Day, _date.Month, _date.Year);
-            var resultValue = CreateResultsValue(0, dom, mlfield, pages);
+            var resultValue = CreateResultsValue(0, dom, az_field, pages);
             resultValue.DerivedFields = derivedFields;
 
             return new ResultsDataPoint(
-                field.FieldId,
-                field.FieldName,
-                field.Type,
+                du_field.FieldId,
+                du_field.FieldName,
+                du_field.Type,
                 new[] { resultValue });
         }
 
-        private static ResultsDataPoint CreateBooleanFieldDataPoint(Field field, DocumentField mlfield, Document dom)
+        private static ResultsDataPoint CreateBooleanFieldDataPoint(Field du_field, DocumentField az_field, Document dom)
         {
             var booleanToken = new ResultsValueTokens(0, (float)dom.Pages[0].Size.Width, (float)dom.Pages[0].Size.Height, new[] { Box.CreateChecked(50, 100, 200, 300) });
             var reference = new ResultsContentReference(0, 0, new[] { booleanToken });
             var firstBooleanValue = new ResultsValue("Yes", reference, 0.9f, 1f);
 
             return new ResultsDataPoint(
-                field.FieldId,
-                field.FieldName,
-                field.Type,
+                du_field.FieldId,
+                du_field.FieldName,
+                du_field.Type,
                 new[] { firstBooleanValue });
         }
 
-        private static ResultsDataPoint CreateTableFieldDataPoint(Field firstTableField, DocumentField mlfield, Document dom, PageLayout[] pages )
+        private static ResultsDataPoint CreateTableFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages )
         {
             int i = 0;
-            var headerCells = firstTableField.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateResultsValue(i++, dom, mlfield, pages) }));
 
-            var firstRowCells = firstTableField.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateResultsValue(i++, dom, mlfield, pages) }));
-            var secondRowCells = firstTableField.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateResultsValue(i++, dom, mlfield, pages) }));
+            List<IEnumerable<ResultsDataPoint>> rows = new List<IEnumerable<ResultsDataPoint>>();
+            if ( az_field.FieldType == DocumentFieldType.List)
+            {
+                foreach (DocumentField az_item in az_field.Value.AsList())
+                {
+                    var row = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type,
+                                                                new[] { CreateRowResultsValue(i++, c, dom, az_item, pages.ToArray())}));
+                    rows.Add(row);
+                }
+            }
+            var headerCells = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateResultsValue(i++, dom, az_field, pages) }));
 
-            var tableValue = ResultsValue.CreateTableValue(firstTableField, headerCells, new[] { firstRowCells, secondRowCells }, 0.9f, 1f);
+            var tableValue = ResultsValue.CreateTableValue(du_field, headerCells, rows.ToArray(), 0.9f, 1f);
 
             return new ResultsDataPoint(
-                firstTableField.FieldId,
-                firstTableField.FieldName,
-                firstTableField.Type,
+                du_field.FieldId,
+                du_field.FieldName,
+                du_field.Type,
                 new[] { tableValue });
+        }
+
+        private static ResultsValue CreateRowResultsValue( int  rowIdx, Field du_item, Document dom, DocumentField az_item, PageLayout[] pages)
+        {
+            float ocr_confidence = 0f;
+            Rectangle rect = new Rectangle((Int32)az_item.BoundingRegions[0].BoundingPolygon[0].X - 2,
+                      (Int32)az_item.BoundingRegions[0].BoundingPolygon[0].Y - 2,
+                      (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[1].X - az_item.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
+                      (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[2].Y - az_item.BoundingRegions[0].BoundingPolygon[0].Y) * 1.1));
+
+            var words = dom.Pages[az_item.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
+                .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
+#if DEBUG
+            Console.WriteLine($"{words.Length} words found");
+#endif
+            List<Box> boxes = new List<Box>();
+            List<ResultsValueTokens> tokens = new List<ResultsValueTokens>();
+            foreach (var w in words)
+            {
+                boxes.Add(w.Box);
+#if DEBUG
+                Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
+#endif
+                ocr_confidence += w.OcrConfidence;
+            }
+#if DEBUG
+            Console.WriteLine($"{boxes.Count} is found");
+#endif
+            if (boxes.Count == 0)
+            {
+                boxes.Add(Box.CreateChecked(0, 0, 0, 0));
+            }
+            tokens.Add(new ResultsValueTokens(az_item.Spans[0].Index, az_item.Spans[0].Length,
+                                az_item.BoundingRegions[0].PageNumber - 1,
+                                (float)dom.Pages[az_item.BoundingRegions[0].PageNumber - 1].Size.Width,
+                                (float)dom.Pages[az_item.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
+            var reference = new ResultsContentReference(az_item.Spans[0].Index, az_item.Spans[0].Length, tokens.ToArray());
+            return new ResultsValue(az_item.Content, reference, (float)az_item.Confidence, (float)ocr_confidence / boxes.Count);
         }
 
         private static ResultsValue CreateResultsValue(int wordIndex, Document dom, DocumentField az_field, PageLayout [] pages)
         {
-            //TODO - find match word with BoundingBox 
-            var word = dom.Pages[0].Sections.SelectMany(s => s.WordGroups).SelectMany(w => w.Words).ToArray()[wordIndex];
+            float ocr_confidence = 0f;
+            Rectangle rect = new Rectangle((Int32)az_field.BoundingRegions[0].BoundingPolygon[0].X-2,
+                                 (Int32)az_field.BoundingRegions[0].BoundingPolygon[0].Y-2,
+                                 (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[1].X - az_field.BoundingRegions[0].BoundingPolygon[0].X)*1.1),
+                                 (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[2].Y - az_field.BoundingRegions[0].BoundingPolygon[0].Y)*1.1) );
+
+            var words= dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
+                .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
+
+#if DEBUG
+            Console.WriteLine($"{words.Length} words found");
+#endif
             List<Box> boxes = new List<Box>();
             List<ResultsValueTokens> tokens = new List<ResultsValueTokens>();
-            foreach( var x in az_field.BoundingRegions)
+            foreach( var w in words)
             {
-                PointF[] points = x.BoundingPolygon.ToArray().Select( p =>  new PointF((float)ConvertSize(p.X, pages[x.PageNumber - 1].Width, dom.Pages[x.PageNumber-1].Size.Width),
-                                                                                        (float)ConvertSize(p.Y, pages[x.PageNumber - 1].Height, dom.Pages[x.PageNumber - 1].Size.Height))).ToArray();
-                //adjust co-ordinate 
-                boxes.Add(Box.CreateUnchecked(points[3].X, points[3].Y, Math.Abs(points[0].X - points[3].X), Math.Abs(points[0].Y - points[1].Y)));
-                tokens.Add(new ResultsValueTokens(word.IndexInText, word.Text.Length, 
-                                x.PageNumber-1, (float)dom.Pages[ x.PageNumber-1].Size.Width, 
-                                (float)dom.Pages[x.PageNumber-1].Size.Height, boxes.ToArray()));
-                boxes.Clear();
+                boxes.Add(w.Box);
+#if DEBUG
+                Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
+#endif
+                ocr_confidence += w.OcrConfidence;
             }
-            //var wordValueToken = new ResultsValueTokens(word.IndexInText, word.Text.Length, 0, (float)dom.Pages[0].Size.Width, (float)dom.Pages[0].Size.Height, boxes.ToArray());
-            var reference = new ResultsContentReference(word.IndexInText, word.Text.Length, tokens.ToArray());
-            return new ResultsValue(az_field.Content ?? word.Text, reference, (float)az_field.Confidence, 0.0f); // word.OcrConfidence);
+#if DEBUG
+            Console.WriteLine($"{boxes.Count} is found");
+#endif
+            if( boxes.Count == 0)
+            {
+                boxes.Add(Box.CreateChecked(0, 0, 0, 0));
+            }
+            tokens.Add(new ResultsValueTokens(az_field.Spans[0].Index, az_field.Spans[0].Length, 
+                                az_field.BoundingRegions[0].PageNumber - 1, 
+                                (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Width,
+                                (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
+            var reference = new ResultsContentReference(az_field.Spans[0].Index, az_field.Spans[0].Length, tokens.ToArray());
+            return new ResultsValue( az_field.Content, reference, (float)az_field.Confidence, (float)ocr_confidence / boxes.Count); // word.OcrConfidence);
         }
 
         private static ResultsValue CreateResultsValue2(int wordIndex, Document dom, string value = null)
