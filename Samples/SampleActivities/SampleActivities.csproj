@@ -49,6 +49,13 @@
 	<PackageReference Include="System.Drawing.Common" Version="5.0.2" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Basic\DataExtraction\ClovaIDCardDesigner.xaml.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Remove="Basic\DataExtraction\AzureInvoiceDesigner.xaml" />
+    <Page Remove="Basic\DataExtraction\ClovaIDCardDesigner.xaml" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Azure.AI.FormRecognizer" Version="4.0.0" />
     <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.18.0" />
     <PackageReference Include="UiPath.OCR.Contracts" Version="2.14.0" />

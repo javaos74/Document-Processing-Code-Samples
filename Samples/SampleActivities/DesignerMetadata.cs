@@ -15,21 +15,24 @@ namespace SampleActivities
 
             // Designers
             var simpleClassifierDesigner = new DesignerAttribute(typeof(SimpleClassifierDesigner));
-            var azureInvoiceDesigner = new DesignerAttribute(typeof(AzureInvoiceDesigner));
+//            var azureInvoiceDesigner = new DesignerAttribute(typeof(AzureInvoiceDesigner));
+//            var clovaIDCardDesigner = new DesignerAttribute(typeof(ClovaIDCardDesigner));
 
             //Categories
-            var classifierCategoryAttribute = new CategoryAttribute("Sample Classifiers");
-            var extractorCategoryAttribute = new CategoryAttribute("Azure Extractors");
-            var ocrCategoryAttribute = new CategoryAttribute("Sample OCR Engines");
+            var classifierCategoryAttribute = new CategoryAttribute("DU Extension Classifiers");
+            var extractorCategoryAttribute = new CategoryAttribute("DU Extension Extractors");
+            var ocrCategoryAttribute = new CategoryAttribute("DU Extension OCR Engines");
 
             builder.AddCustomAttributes(typeof(SimpleClassifier), classifierCategoryAttribute);
             builder.AddCustomAttributes(typeof(SimpleClassifier), simpleClassifierDesigner);
 
             builder.AddCustomAttributes(typeof(AzureInvoice), extractorCategoryAttribute);
-            builder.AddCustomAttributes(typeof(AzureInvoice), azureInvoiceDesigner);
+//            builder.AddCustomAttributes(typeof(AzureInvoice), azureInvoiceDesigner);
+            builder.AddCustomAttributes(typeof(ClovaDriverLicenseExtractor), extractorCategoryAttribute);
+            builder.AddCustomAttributes(typeof(ClovaIDCardExtractor), extractorCategoryAttribute);
 
-            builder.AddCustomAttributes(typeof(SimpleOCREngine), ocrCategoryAttribute);
-            builder.AddCustomAttributes(typeof(SimpleOCREngine), nameof(SimpleOCREngine.Result), new CategoryAttribute("Output"));
+            builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
+            builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));
 
             MetadataStore.AddAttributeTable(builder.CreateTable());
         }

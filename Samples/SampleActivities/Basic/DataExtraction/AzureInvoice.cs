@@ -34,12 +34,12 @@ namespace SampleActivities.Basic.DataExtraction
     [DisplayName("Charles Azure-Invoice Extractor")]
     public class AzureInvoice : ExtractorAsyncCodeActivity
     {
-        [Category("Custom Model")]
+        [Category("Server")]
         [RequiredArgument]
         [Description("ML모델 서비스 endpoint 정보")]
         public InArgument<string> Endpoint { get; set; }
 
-        [Category("Custom Model")]
+        [Category("Server")]
         [RequiredArgument]
         [Description("ML모델 서비스 endpoint Api Key정보 ")]
         public InArgument<string> ApiKey { get; set; }
@@ -393,15 +393,6 @@ namespace SampleActivities.Basic.DataExtraction
             return new ResultsValue( az_field.Content, reference, (float)az_field.Confidence, (float)ocr_confidence / boxes.Count); // word.OcrConfidence);
         }
 
-        private static ResultsValue CreateResultsValue2(int wordIndex, Document dom, string value = null)
-        {
-            //TODO - find match word with BoundingBox 
-            var word = dom.Pages[0].Sections.SelectMany(s => s.WordGroups).SelectMany(w => w.Words).ToArray()[wordIndex];
-            var wordValueToken = new ResultsValueTokens(word.IndexInText, word.Text.Length, 0, (float)dom.Pages[0].Size.Width, (float)dom.Pages[0].Size.Height, new[] { word.Box });
-            var reference = new ResultsContentReference(word.IndexInText, word.Text.Length, new[] { wordValueToken });
-            
-            return new ResultsValue(value ?? word.Text, reference, (float)0.9f, word.OcrConfidence);
-        }
         private static double ConvertSize(double curX, double curWidth, double baseWidth)
         {
             return curX / curWidth * baseWidth; 
