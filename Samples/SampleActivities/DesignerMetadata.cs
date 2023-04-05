@@ -23,13 +23,14 @@ namespace SampleActivities
             var extractorCategoryAttribute = new CategoryAttribute("DU Extension Extractors");
             var ocrCategoryAttribute = new CategoryAttribute("DU Extension OCR Engines");
 
-            builder.AddCustomAttributes(typeof(SimpleClassifier), classifierCategoryAttribute);
-            builder.AddCustomAttributes(typeof(SimpleClassifier), simpleClassifierDesigner);
+            //builder.AddCustomAttributes(typeof(SimpleClassifier), classifierCategoryAttribute);
+            //builder.AddCustomAttributes(typeof(SimpleClassifier), simpleClassifierDesigner);
 
             builder.AddCustomAttributes(typeof(AzureInvoice), extractorCategoryAttribute);
 //            builder.AddCustomAttributes(typeof(AzureInvoice), azureInvoiceDesigner);
             builder.AddCustomAttributes(typeof(ClovaDriverLicenseExtractor), extractorCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaIDCardExtractor), extractorCategoryAttribute);
+            builder.AddCustomAttributes(typeof(ClovaBusinessLicenseExtractor), extractorCategoryAttribute);
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));

@@ -152,7 +152,7 @@ namespace SampleActivities.Basic.DataExtraction
     }
 
    
-    [DisplayName("Charles Clova ID Card Extractor")]
+    [DisplayName("Clova 주민등록증 Extractor")]
     public class ClovaIDCardExtractor : ExtractorAsyncCodeActivity
     {
         [Category("Server")]
@@ -185,7 +185,7 @@ namespace SampleActivities.Basic.DataExtraction
 
             return Task.FromResult(new[] {
                 new ExtractorDocumentTypeCapabilities{
-                    DocumentTypeId = "clova.idcard.charlesdemo",
+                    DocumentTypeId = "clova.idCard.ic",
                     Fields = fields.ToArray()
                 }
             });

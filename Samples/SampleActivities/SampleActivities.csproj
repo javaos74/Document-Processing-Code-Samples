@@ -50,10 +50,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Basic\DataExtraction\ClovaIDCardDesigner.xaml.cs" />
+    <Compile Remove="Basic\OCR\SimpleOCREngine.cs" />
+    <Compile Remove="Basic\OCR\SimpleOCRScrape.cs" />
+    <Compile Remove="Basic\OCR\SimpleOCRScrapeFactory.cs" />
+    <Compile Remove="Basic\OCR\SimpleScrapeControl.xaml.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Basic\DataExtraction\AzureInvoiceDesigner.xaml" />
     <Page Remove="Basic\DataExtraction\ClovaIDCardDesigner.xaml" />
+    <Page Remove="Basic\OCR\SimpleScrapeControl.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.AI.FormRecognizer" Version="4.0.0" />

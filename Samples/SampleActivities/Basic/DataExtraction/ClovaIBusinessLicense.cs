@@ -25,8 +25,8 @@ namespace SampleActivities.Basic.DataExtraction
 {
 
    
-    [DisplayName("Clova 운전면허증 Extractor")]
-    public class ClovaDriverLicenseExtractor : ExtractorAsyncCodeActivity
+    [DisplayName("Clova 사업자등록증 Extractor")]
+    public class ClovaBusinessLicenseExtractor : ExtractorAsyncCodeActivity
     {
         [Category("Server")]
         [RequiredArgument]
@@ -44,28 +44,35 @@ namespace SampleActivities.Basic.DataExtraction
 
         public override Task<ExtractorDocumentTypeCapabilities[]> GetCapabilities()
         {
-#if DEBUG
+#if DEBUG2
             Debug.WriteLine("GetCapabilities called");
 #endif
             //Azure Form Recognizer invoice fields definition 
             List<ExtractorFieldCapability> fields = new List<ExtractorFieldCapability>();
 
-            fields.Add(new ExtractorFieldCapability { FieldId = "type", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "num", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "name", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "personalNum", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "address", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "renewStartDate", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "renewEndDate", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "condition", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "code", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "organDonation", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "issueDate", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
-            fields.Add(new ExtractorFieldCapability { FieldId = "authority", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "birth", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "bisAddress", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "bisArea", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "bisItem", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "registerNumber", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "bisType", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "companyName", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "coRepName", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "corpName", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "corpRegisterNum", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "coRepSocialNum", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "documentType", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "headAddress", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "issuanceDate", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "issuanceReason", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "openDate", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "repName", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "socialNumber", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
+            fields.Add(new ExtractorFieldCapability { FieldId = "taxType", Components = new ExtractorFieldCapability[0], SetValues = new string[0] });
 
             return Task.FromResult(new[] {
                 new ExtractorDocumentTypeCapabilities{
-                    DocumentTypeId = "clova.idCard.dl",
+                    DocumentTypeId = "clova.bizLicense",
                     Fields = fields.ToArray()
                 }
             });
@@ -137,7 +144,7 @@ namespace SampleActivities.Basic.DataExtraction
             {
                 StringBuilder sb = new StringBuilder();
                 JObject respJson = JObject.Parse(resp.body);
-                JObject blocks = (JObject)respJson["images"][0]["idCard"]["result"]["dl"];
+                JObject blocks = (JObject)respJson["images"][0]["bizLicense"]["result"];
 #if DEBUG2
                 Console.WriteLine("driverlicense result : " + resp.body);
 #endif
@@ -147,74 +154,99 @@ namespace SampleActivities.Basic.DataExtraction
 #if DEBUG2
                     Console.WriteLine($"field: {du_field.FieldId}");
 #endif
-                    if (du_field.FieldId.Equals("type") && blocks.ContainsKey("type"))
+                    if (du_field.FieldId.Equals("birth") && blocks.ContainsKey("birth"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["type"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["birth"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("num") && blocks.ContainsKey("num"))
+                    else if (du_field.FieldId.Equals("bisAddress") && blocks.ContainsKey("bisAddress"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["num"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["bisAddress"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("name") && blocks.ContainsKey("name"))
+                    else if (du_field.FieldId.Equals("bisArea") && blocks.ContainsKey("bisArea"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["name"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["bisArea"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("personalNum") && blocks.ContainsKey("personalNum"))
+                    else if (du_field.FieldId.Equals("bisItem") && blocks.ContainsKey("bisItem"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["personalNum"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["bisItem"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("address") && blocks.ContainsKey("address"))
+                    else if (du_field.FieldId.Equals("registerNumber") && blocks.ContainsKey("registerNumber"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["address"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["registerNumber"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("renewStartDate") && blocks.ContainsKey("renewStartDate"))   
+                    else if (du_field.FieldId.Equals("bisType") && blocks.ContainsKey("bisType"))   
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["renewStartDate"][0].ToString());
-                        if( clova_field.Formatted.FieldType == ClovaFieldType.Date)
-                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
-                        else
-                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
-
-                    }
-                    else if (du_field.FieldId.Equals("renewEndDate") && blocks.ContainsKey("renewEndDate"))   
-                    {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["renewEndDate"][0].ToString());
-                        if( clova_field.Formatted.FieldType == ClovaFieldType.Date)
-                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
-                        else
-                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
-                    }
-                    else if (du_field.FieldId.Equals("issueDate") && blocks.ContainsKey("issueDate"))
-                    {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issueDate"][0].ToString());
-                        if( clova_field.Formatted.FieldType == ClovaFieldType.Date)
-                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
-                        else
-                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
-                    }
-                    else if (du_field.FieldId.Equals("condition") && blocks.ContainsKey("condition"))
-                    {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["condition"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["bisType"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("code") && blocks.ContainsKey("code"))
+                    else if (du_field.FieldId.Equals("companyName") && blocks.ContainsKey("companyName"))   
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["code"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["companyName"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("organDonation") && blocks.ContainsKey("organDonation"))
+                    else if (du_field.FieldId.Equals("coRepName") && blocks.ContainsKey("coRepName"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["organDonation"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["coRepName"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
-                    else if (du_field.FieldId.Equals("authority") && blocks.ContainsKey("authority"))
+                    else if (du_field.FieldId.Equals("corpName") && blocks.ContainsKey("corpName"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["authority"][0].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["corpName"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("corpRegisterNum") && blocks.ContainsKey("corpRegisterNum"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["corpRegisterNum"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("coRepSocialNum") && blocks.ContainsKey("coRepSocialNum"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["coRepSocialNum"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("documentType") && blocks.ContainsKey("documentType"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["documentType"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("headAddress") && blocks.ContainsKey("headAddress"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["headAddress"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("issuanceDate") && blocks.ContainsKey("issuanceDate"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issuanceDate"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("issuanceReason") && blocks.ContainsKey("issuanceReason"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issuanceReason"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("openDate") && blocks.ContainsKey("openDate"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["openDate"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("repName") && blocks.ContainsKey("repName"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["repName"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("socialNumber") && blocks.ContainsKey("socialNumber"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["socialNumber"][0].ToString());
+                        resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                    }
+                    else if (du_field.FieldId.Equals("taxType") && blocks.ContainsKey("taxType"))
+                    {
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["taxType"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                 }
@@ -285,7 +317,7 @@ namespace SampleActivities.Basic.DataExtraction
                                 (float)dom.Pages[0].Size.Width,
                                 (float)dom.Pages[0].Size.Height, boxes.ToArray()));
             var reference = new ResultsContentReference(0, clova_field.Text.Length, tokens.ToArray());
-            return new ResultsValue(clova_field.Text, reference, 0.0f, (float)ocr_confidence); 
+            return new ResultsValue(clova_field.Text, reference, 0.0f, (float)ocr_confidence);
         }
     }
 }
