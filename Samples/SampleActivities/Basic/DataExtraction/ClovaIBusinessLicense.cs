@@ -76,7 +76,6 @@ namespace SampleActivities.Basic.DataExtraction
                     Fields = fields.ToArray()
                 }
             });
-            //return Task.FromResult(new ExtractorDocumentTypeCapabilities[0]);
         }
         public override Boolean ProvidesCapabilities()
         {
