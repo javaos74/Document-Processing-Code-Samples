@@ -123,8 +123,8 @@ namespace SampleActivities.Basic.DataExtraction
             var client = new UiPathHttpClient(endpoint);
             client.setSecret(apikey);
             var reqBody = new RequestBody();
-            var reqimg = new RequestImage(Path.GetFileName(documentPath));
-            reqimg.format = Path.GetExtension(documentPath);
+            var reqimg = new RequestImage(Path.GetFileNameWithoutExtension(documentPath));
+            reqimg.format = Path.GetExtension(documentPath).Substring(1);
             reqBody.images.Add(reqimg);
             client.AddField("message", JsonConvert.SerializeObject(reqBody));
             client.AddFile(documentPath);
@@ -138,70 +138,90 @@ namespace SampleActivities.Basic.DataExtraction
                 StringBuilder sb = new StringBuilder();
                 JObject respJson = JObject.Parse(resp.body);
                 JObject blocks = (JObject)respJson["images"][0]["idCard"]["result"]["dl"];
+#if DEBUG2
+                Console.WriteLine("driverlicense result : " + resp.body);
+#endif
                 //name 
                 foreach (var du_field in documentType.Fields)
                 {
+#if DEBUG2
+                    Console.WriteLine($"field: {du_field.FieldId}");
+#endif
                     if (du_field.FieldId.Equals("type") && blocks.ContainsKey("type"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["type"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["type"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("num") && blocks.ContainsKey("num"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["num"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["num"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("name") && blocks.ContainsKey("name"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["name"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["name"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("personalNum") && blocks.ContainsKey("personalNum"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["personalNum"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["personalNum"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("address") && blocks.ContainsKey("address"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["address"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["address"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("renewStartDate") && blocks.ContainsKey("renewStartDate"))   
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["renewStartDate"].ToString());
-                        resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["renewStartDate"][0].ToString());
+                        if( clova_field.Formatted.FieldType == ClovaFieldType.Date)
+                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                        else
+                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+
                     }
                     else if (du_field.FieldId.Equals("renewEndDate") && blocks.ContainsKey("renewEndDate"))   
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["renewStartDate"].ToString());
-                        resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["renewEndDate"][0].ToString());
+                        if( clova_field.Formatted.FieldType == ClovaFieldType.Date)
+                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                        else
+                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("issueDate") && blocks.ContainsKey("issueDate"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issueDate"].ToString());
-                        resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issueDate"][0].ToString());
+                        if( clova_field.Formatted.FieldType == ClovaFieldType.Date)
+                            resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
+                        else
+                            resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("condition") && blocks.ContainsKey("condition"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["condition"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["condition"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("code") && blocks.ContainsKey("code"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["code"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["code"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("organDonation") && blocks.ContainsKey("organDonation"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["organDonation"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["organDonation"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("authority") && blocks.ContainsKey("authority"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["authority"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["authority"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                 }
+            }
+            else
+            {
+                Console.WriteLine($"error: {resp.body}");
             }
             extractorResult.DataPoints = resultsDataPoints.ToArray();
             return extractorResult;
@@ -220,7 +240,7 @@ namespace SampleActivities.Basic.DataExtraction
          private static ResultsDataPoint CreateDateFieldDataPoint(Field du_field, ClovaField clova_field, Document dom, PageLayout[] pages)
         {
             // TODO
-            DateTimeOffset _date = clova_field.Formatted.Date ;
+            DateTimeOffset _date = clova_field.Formatted.Date;
             var derivedFields = ResultsDerivedField.CreateDerivedFieldsForDate(_date.Day, _date.Month, _date.Year);
             var resultValue = CreateResultsValue(0, dom, clova_field, pages);
             resultValue.DerivedFields = derivedFields;
@@ -234,13 +254,13 @@ namespace SampleActivities.Basic.DataExtraction
 
         private static ResultsValue CreateResultsValue(int wordIndex, Document dom, ClovaField clova_field, PageLayout[] pages)
         {
-            float ocr_confidence = 0f;
+            float ocr_confidence = 1.0f;
             Rectangle rect = clova_field.Box;
 
             var words = dom.Pages[0].Sections.SelectMany(s => s.WordGroups)
                 .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
 
-#if DEBUG
+#if DEBUG2
             Console.WriteLine($"{words.Length} words found");
 #endif
             List<Box> boxes = new List<Box>();
@@ -248,12 +268,12 @@ namespace SampleActivities.Basic.DataExtraction
             foreach (var w in words)
             {
                 boxes.Add(w.Box);
-#if DEBUG
+#if DEBUG2
                 Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
 #endif
-                ocr_confidence += w.OcrConfidence;
+                ocr_confidence = Math.Min(w.OcrConfidence, ocr_confidence);
             }
-#if DEBUG
+#if DEBUG2
             Console.WriteLine($"{boxes.Count} is found");
 #endif
             if (boxes.Count == 0)
@@ -265,7 +285,7 @@ namespace SampleActivities.Basic.DataExtraction
                                 (float)dom.Pages[0].Size.Width,
                                 (float)dom.Pages[0].Size.Height, boxes.ToArray()));
             var reference = new ResultsContentReference(0, clova_field.Text.Length, tokens.ToArray());
-            return new ResultsValue(clova_field.Text, reference, 0.0f, (float)ocr_confidence / boxes.Count); 
+            return new ResultsValue(clova_field.Text, reference, 0.0f, (float)ocr_confidence); 
         }
     }
 }

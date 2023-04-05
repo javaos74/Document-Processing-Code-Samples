@@ -40,18 +40,40 @@ namespace SampleActivities.Basic.DataExtraction
         [JsonProperty("boundingPolys")]
         public BoundingPoly[] BoundingPolys { get; set; }
 
+        private Rectangle _box = Rectangle.Empty;
         public Rectangle    Box {  
             get
             {
-                Rectangle r = new Rectangle(0, 0, 0, 0);
-                foreach( var p in BoundingPolys)
+                if (_box != Rectangle.Empty)
                 {
-                    r = Rectangle.Union(r, new Rectangle( (int)p.Vertices[0].X, (int)p.Vertices[0].Y,
-                                                         (int)Math.Abs(p.Vertices[0].X - p.Vertices[1].X),
-                                                         (int)Math.Abs(p.Vertices[0].Y - p.Vertices[2].Y)));
+                    return _box;
                 }
-                return r;
+                else
+                {
+                    foreach (var p in BoundingPolys)
+                    {
+                        if (_box == Rectangle.Empty)
+                        {
+                            _box = new Rectangle((int)Math.Floor(p.Vertices[0].X)-2, 
+                                                             (int)Math.Floor(p.Vertices[0].Y)-2,
+                                                             (int)Math.Ceiling(Math.Abs(p.Vertices[0].X - p.Vertices[1].X))+4,
+                                                             (int)Math.Ceiling(Math.Abs(p.Vertices[0].Y - p.Vertices[2].Y))+4);
+                        }
+                        else
+                        {
+                            _box = Rectangle.Union(_box, new Rectangle((int)Math.Floor(p.Vertices[0].X)-2, 
+                                                                 (int)Math.Floor(p.Vertices[0].Y)-2,
+                                                                 (int)Math.Ceiling(Math.Abs(p.Vertices[0].X - p.Vertices[1].X))+4,
+                                                                 (int)Math.Ceiling(Math.Abs(p.Vertices[0].Y - p.Vertices[2].Y))+4) );
+                        }
+                    }
+                }
+                return _box;
             } 
+        }
+        override public String ToString()
+        {
+            return $"text: {Text}, formated: {Formatted} Box: {Box.ToString()}";
         }
     }
 
@@ -74,7 +96,19 @@ namespace SampleActivities.Basic.DataExtraction
 
 
         private DateTime _date;
-        public DateTime Date { get { return _date; } }
+        public DateTime Date { 
+            get {
+                if (!string.IsNullOrEmpty(Year) && !string.IsNullOrEmpty(Month) && !string.IsNullOrEmpty(Day))
+                {
+                    _date = new DateTime(Convert.ToInt32(Year), Convert.ToInt32(Month), Convert.ToInt32(Day));
+                    return _date;
+                }
+                else
+                {
+                    return DateTime.MinValue;
+                }
+            } 
+        }
         public ClovaFieldType FieldType { 
             get 
             {
@@ -91,6 +125,16 @@ namespace SampleActivities.Basic.DataExtraction
                 return type;
             } 
         }
+        public override string ToString()
+        {
+            if (FieldType == ClovaFieldType.Date)
+                return $"date: {_date.ToString("yyyy-MM-dd")}";
+            else if (FieldType == ClovaFieldType.Time)
+                return $"time : {Hour}:{Minute}:{Second}";
+            else
+                return $"value: {Value}";
+        }
+
     }
 
     internal class BoundingPoly
@@ -127,7 +171,7 @@ namespace SampleActivities.Basic.DataExtraction
 
         public override Task<ExtractorDocumentTypeCapabilities[]> GetCapabilities()
         {
-#if DEBUG
+#if DEBUG2
             Debug.WriteLine("GetCapabilities called");
 #endif
             //Azure Form Recognizer invoice fields definition 
@@ -213,33 +257,36 @@ namespace SampleActivities.Basic.DataExtraction
             {
                 StringBuilder sb = new StringBuilder();
                 JObject respJson = JObject.Parse(resp.body);
+#if DEBUG2
+                Console.WriteLine("IDcard result : " + resp.body);
+#endif
                 JObject blocks = (JObject)respJson["images"][0]["idCard"]["result"]["ic"];
                 //name 
                 foreach (var du_field in documentType.Fields)
                 {
                     if (du_field.FieldId.Equals("name") && blocks.ContainsKey("name"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["name"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["name"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("personalNum") && blocks.ContainsKey("personalNum"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["personalNum"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["personalNum"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("address") && blocks.ContainsKey("address"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["address"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["address"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("issueDate") && blocks.ContainsKey("issueDate"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issueDate"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["issueDate"][0].ToString());
                         resultsDataPoints.Add(CreateDateFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                     else if (du_field.FieldId.Equals("authority") && blocks.ContainsKey("authority"))
                     {
-                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["authority"].ToString());
+                        ClovaField clova_field = JsonConvert.DeserializeObject<ClovaField>(blocks["authority"][0].ToString());
                         resultsDataPoints.Add(CreateTextFieldDataPoint(du_field, clova_field, dom, pages.ToArray()));
                     }
                 }
@@ -281,7 +328,7 @@ namespace SampleActivities.Basic.DataExtraction
             var words = dom.Pages[0].Sections.SelectMany(s => s.WordGroups)
                 .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
 
-#if DEBUG
+#if DEBUG2
             Console.WriteLine($"{words.Length} words found");
 #endif
             List<Box> boxes = new List<Box>();
@@ -289,12 +336,12 @@ namespace SampleActivities.Basic.DataExtraction
             foreach (var w in words)
             {
                 boxes.Add(w.Box);
-#if DEBUG
+#if DEBUG2
                 Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
 #endif
                 ocr_confidence += w.OcrConfidence;
             }
-#if DEBUG
+#if DEBUG2
             Console.WriteLine($"{boxes.Count} is found");
 #endif
             if (boxes.Count == 0)
