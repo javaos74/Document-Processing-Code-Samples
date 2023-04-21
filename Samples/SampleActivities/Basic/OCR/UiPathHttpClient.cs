@@ -61,6 +61,25 @@ namespace SampleActivities.Basic.OCR
 
             this.content.Add(new StreamContent(new MemoryStream(buf)), "file", System.IO.Path.GetFileNameWithoutExtension(fileName));
         }
+
+        public void AddFile(string fileName, string fieldName)
+        {
+            var fstream = System.IO.File.OpenRead(fileName);
+            byte[] buf = new byte[fstream.Length];
+            int read_bytes = 0;
+            int offset = 0;
+            int remains = (int)fstream.Length;
+            do
+            {
+                read_bytes += fstream.Read(buf, offset, remains);
+                offset += read_bytes;
+                remains -= read_bytes;
+            } while (remains != 0);
+            fstream.Close();
+
+            this.content.Add(new StreamContent(new MemoryStream(buf)), fieldName, System.IO.Path.GetFileName(fileName));
+        }
+
         public void AddField( string name, string value)
         {
             this.content.Add(new StringContent(value), name);

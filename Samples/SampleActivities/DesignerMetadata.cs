@@ -33,7 +33,9 @@ namespace SampleActivities
             builder.AddCustomAttributes(typeof(ClovaBusinessLicenseExtractor), extractorCategoryAttribute);
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
+            builder.AddCustomAttributes(typeof(HancomOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));
+            builder.AddCustomAttributes(typeof(HancomOCREngine), nameof(HancomOCREngine.Result), new CategoryAttribute("Output"));
 
             MetadataStore.AddAttributeTable(builder.CreateTable());
         }
