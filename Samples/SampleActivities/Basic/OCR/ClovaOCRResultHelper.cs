@@ -98,6 +98,10 @@ namespace SampleActivities.Basic.OCR
             client.AddFile(file_path);
 
             var resp = await client.Upload();
+            int [] angle = { 0, 0, 0, 0 };
+            int rotation_check_count = 30;
+            OCRRotation rotation = OCRRotation.None;
+            int min_score = 100;
 #if DEBUG
             System.Console.WriteLine(resp.status + " == > " + (resp.body.Length > 100 ? resp.body.Substring(0, 100) : resp.body));
             System.IO.File.WriteAllText(@"C:\Temp\clova_resp.json", resp.body);
@@ -121,11 +125,57 @@ namespace SampleActivities.Basic.OCR
                         Char = ch,
                     }).ToArray()
                 }).ToArray();
+
                 foreach (var blk in blocks)
                 {
                     sb.Append((string)blk["inferText"]);
                     sb.Append(((Boolean)blk["lineBreak"]) ? Environment.NewLine : " ");
                 }
+
+                foreach (var word in ocrResult.Words)
+                {
+                    if (rotation_check_count >= 0)
+                    {
+                        if ( Math.Abs(word.PolygonPoints[0].X - word.PolygonPoints[1].X) <= 2 &&
+                            Math.Abs(word.PolygonPoints[1].Y - word.PolygonPoints[2].Y) <= 2 &&
+                            word.PolygonPoints[2].X > word.PolygonPoints[3].X)
+                            angle[1]++;
+                        else if ( Math.Abs(word.PolygonPoints[0].Y - word.PolygonPoints[1].Y) <= 2 &&
+                            Math.Abs(word.PolygonPoints[1].X - word.PolygonPoints[2].X) <= 2 &&
+                            word.PolygonPoints[1].X < word.PolygonPoints[0].X)
+                            angle[2]++;
+                        else if ( Math.Abs(word.PolygonPoints[0].X - word.PolygonPoints[1].X) <= 2 &&
+                            Math.Abs(word.PolygonPoints[1].Y - word.PolygonPoints[2].Y) <= 2 &&
+                            word.PolygonPoints[2].X > word.PolygonPoints[1].X)
+                            angle[3]++;
+                        else
+                            angle[0]++;
+                        rotation_check_count--;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                int max_idx = 0, max = 0, idx=0;
+                for (idx = 0; idx < angle.Length; idx++)
+                {
+                    if (angle[idx] > max)
+                    {
+                        max = angle[idx];
+                        max_idx = idx;
+                    }
+                }
+                if( max_idx == 1)
+                    rotation = OCRRotation.Rotated90;
+                else if (max_idx == 2)
+                    rotation = OCRRotation.Rotated180;
+                else if (max_idx == 3)
+                    rotation = OCRRotation.Rotated270;
+#if DEBUG
+                Console.WriteLine($"Rotation : {rotation.ToString()}");
+#endif
                 foreach (var word in ocrResult.Words)
                 {
                     var x = word.PolygonPoints[0].X;
@@ -135,20 +185,23 @@ namespace SampleActivities.Basic.OCR
 
                     float dx = w / word.Characters.Length;
                     float dy = Math.Abs(y2 - y) / word.Characters.Length;
-                    int idx = 0;
-#if DEBUG
-                   // System.Console.WriteLine(string.Format("{0} has {1} characters", word.Text, word.Characters.Length));
+                    int _idx = 0;
+
+                    min_score = Math.Min(min_score, word.Confidence);
+#if DEBUG2
+                    System.Console.WriteLine(string.Format("{0} has {1} characters", word.Text, word.Characters.Length));
 #endif
                     foreach (var c in word.Characters)
                     {
-                        c.PolygonPoints = new[] { new PointF(x + dx * idx, y), new PointF(x + dx * (idx + 1), y), new PointF(x + dx * (idx + 1), y2), new PointF(x + dx * idx, y2) };
+                        c.PolygonPoints = new[] { new PointF(x + dx * _idx, y), new PointF(x + dx * (_idx + 1), y), new PointF(x + dx * (_idx + 1), y2), new PointF(x + dx * _idx, y2) };
                         c.Confidence = word.Confidence;
-                        idx++;
+                        c.Rotation = rotation; 
+                        _idx++;
                     }
                 }
                 ocrResult.Text = sb.ToString();
                 ocrResult.SkewAngle = 0;
-                ocrResult.Confidence = 0;
+                ocrResult.Confidence = min_score;
             }
             return ocrResult;
         }
@@ -176,70 +229,5 @@ namespace SampleActivities.Basic.OCR
                 return new[] { new PointF(x + dx * idx, y), new PointF(x + dx * (idx + 1), y), new PointF(x + dx * (idx + 1), y2), new PointF(x + dx * idx, y2) };
 
         }
-#if false
-        internal static async Task<OCRResult> FromTextPdf( Dictionary<string, object> options)
-        {
-            OCRResult ocrResult = new OCRResult();
-            float ratio = 0.0f;
-            using (var pdf = new PdfDocument( options["pdffilepath"].ToString()))
-            {
-                var textopt = new PdfTextExtractionOptions
-                {
-                    SkipInvisibleText = false,
-                    WithFormatting = false
-                };
-                string fulltext = pdf.GetText(textopt);
-                PdfPage page = pdf.Pages[0];
-                ratio = (float)( Convert.ToInt32(options["width"]) / page.Width);
-#if DEBUG
-                Console.WriteLine($"image ratio={ratio} >> image.Width={options["width"]}, image.Height={options["height"]}, resolution={options["resolution"]} ||| page.Width={page.Width}, page.Height={page.Height}, page.resolution={page.Resolution}");
-#endif
-
-                ocrResult.Words = page.GetWords().Select(w => new Word
-                {
-                    Text = w.GetText(),
-                    Confidence = 100,
-                    PolygonPoints = new[] { new PointF( (float) (w.Position.X*ratio), (float)(w.Position.Y*ratio)),
-                                            new PointF( (float) ((w.Position.X + w.Size.Width)*ratio), (float)(w.Position.Y*ratio)),
-                                            new PointF( (float) ((w.Position.X + w.Size.Width)*ratio), (float)((w.Position.Y + w.Size.Height)*ratio)),
-                                            new PointF( (float) (w.Position.X*ratio), (float)((w.Position.Y + w.Size.Height)*ratio)) },
-                    Characters = w.GetText().Select(ch => new Character
-                    {
-                        Char = ch,
-                        Confidence =100
-                    }).ToArray()
-                }).ToArray();
-
-                options["fulltext"] = fulltext;
-
-            }
-            foreach (var word in ocrResult.Words)
-            {
-                var x = word.PolygonPoints[0].X;
-                var y = word.PolygonPoints[0].Y;
-                var w = Math.Abs(word.PolygonPoints[1].X - x);
-                var y2 = word.PolygonPoints[3].Y;
-
-                float dx = w / word.Characters.Length;
-                float dy = Math.Abs(y2 - y) / word.Characters.Length;
-                int idx = 0;
-#if DEBUG
-                //System.Console.WriteLine(string.Format("{0} has {1} characters", word.Text, string.Join(",", word.PolygonPoints)));
-#endif
-                foreach (var c in word.Characters)
-                {
-                    c.PolygonPoints = new[] { new PointF( (x + dx * idx)*1, y*1), 
-                                            new PointF((x + dx * (idx + 1))*1, y *1), 
-                                            new PointF((x + dx * (idx + 1))*1, y2 * 1), 
-                                            new PointF((x + dx * idx)*1, y2*1) };
-                    c.Confidence = word.Confidence;
-                    idx++;
-                }
-            }
-
-            return ocrResult;
-        }
-#endif
-
-}
+    }
 }

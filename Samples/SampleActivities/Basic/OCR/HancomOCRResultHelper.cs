@@ -34,16 +34,16 @@ namespace SampleActivities.Basic.OCR
 
         internal static  UiPath.OCR.Contracts.OCRRotation GetOCRRotation( Single rot)
         {
- #if DEBUG
+ #if DEBUG2
             System.Console.WriteLine(" roation : " + rot);
  #endif
-            if ( rot >= 88 && rot <= 92)
+            if ( rot >= 45 && rot < 90+45)
                 return OCRRotation.Rotated90;
-            else if ( rot >= 178 && rot <= 182)
+            else if ( rot >= 90+45 && rot < 180+45)
                 return OCRRotation.Rotated180;
-            else if( rot >= 268 && rot <= 272)
+            else if( rot >= 180+45 && rot < 270+45)
                 return OCRRotation.Rotated270;
-            else if ( rot >= 358 || rot <= 2)
+            else if ( rot >= 270+45 || rot < 45)
                 return OCRRotation.None;
             else
                 return OCRRotation.Other;
@@ -106,6 +106,7 @@ namespace SampleActivities.Basic.OCR
                     {
                         c.PolygonPoints = new[] { new PointF(x + dx * idx, y), new PointF(x + dx * (idx + 1), y), new PointF(x + dx * (idx + 1), y2), new PointF(x + dx * idx, y2) };
                         c.Confidence = word.Confidence;
+                        c.Rotation = GetOCRRotation(360 - (Single)respJson["content"]["ocr_data"][0]["image_rotation"]);
                         idx++;
                     }
                 }
