@@ -134,28 +134,20 @@ namespace SampleActivities.Basic.OCR
 
                 foreach (var word in ocrResult.Words)
                 {
-                    if (rotation_check_count >= 0)
-                    {
-                        if ( Math.Abs(word.PolygonPoints[0].X - word.PolygonPoints[1].X) <= 2 &&
-                            Math.Abs(word.PolygonPoints[1].Y - word.PolygonPoints[2].Y) <= 2 &&
-                            word.PolygonPoints[2].X > word.PolygonPoints[3].X)
-                            angle[1]++;
-                        else if ( Math.Abs(word.PolygonPoints[0].Y - word.PolygonPoints[1].Y) <= 2 &&
-                            Math.Abs(word.PolygonPoints[1].X - word.PolygonPoints[2].X) <= 2 &&
-                            word.PolygonPoints[1].X < word.PolygonPoints[0].X)
-                            angle[2]++;
-                        else if ( Math.Abs(word.PolygonPoints[0].X - word.PolygonPoints[1].X) <= 2 &&
-                            Math.Abs(word.PolygonPoints[1].Y - word.PolygonPoints[2].Y) <= 2 &&
-                            word.PolygonPoints[2].X > word.PolygonPoints[1].X)
-                            angle[3]++;
-                        else
-                            angle[0]++;
-                        rotation_check_count--;
-                    }
+                    if ( Math.Abs(word.PolygonPoints[0].X - word.PolygonPoints[1].X) <= 2 &&
+                        Math.Abs(word.PolygonPoints[1].Y - word.PolygonPoints[2].Y) <= 2 &&
+                        word.PolygonPoints[2].X > word.PolygonPoints[3].X)
+                        angle[1]++;
+                    else if ( Math.Abs(word.PolygonPoints[0].Y - word.PolygonPoints[1].Y) <= 2 &&
+                        Math.Abs(word.PolygonPoints[1].X - word.PolygonPoints[2].X) <= 2 &&
+                        word.PolygonPoints[1].X < word.PolygonPoints[0].X)
+                        angle[2]++;
+                    else if ( Math.Abs(word.PolygonPoints[0].X - word.PolygonPoints[1].X) <= 2 &&
+                        Math.Abs(word.PolygonPoints[1].Y - word.PolygonPoints[2].Y) <= 2 &&
+                        word.PolygonPoints[2].X > word.PolygonPoints[1].X)
+                        angle[3]++;
                     else
-                    {
-                        break;
-                    }
+                        angle[0]++;
                 }
 
                 int max_idx = 0, max = 0, idx=0;
@@ -175,6 +167,7 @@ namespace SampleActivities.Basic.OCR
                     rotation = OCRRotation.Rotated270;
 #if DEBUG
                 Console.WriteLine($"Rotation : {rotation.ToString()}");
+                Console.WriteLine($"0: {angle[0]}, 90: {angle[1]}, 180: {angle[2]}, 270: {angle[3]}");
 #endif
                 foreach (var word in ocrResult.Words)
                 {
