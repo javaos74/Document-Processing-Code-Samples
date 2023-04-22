@@ -13,7 +13,7 @@ using UiPath.DocumentProcessing.Contracts.Dom;
 using UiPath.DocumentProcessing.Contracts.Results;
 using UiPath.DocumentProcessing.Contracts.Taxonomy;
 using SampleActivities.Basic.OCR;
-using static SampleActivities.Basic.OCR.OCRResultHelper;
+using static SampleActivities.Basic.OCR.ClovaOCRResultHelper;
 using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
@@ -162,7 +162,7 @@ namespace SampleActivities.Basic.DataExtraction
 
         [Category("Server")]
         [RequiredArgument]
-        [Description("ML모델 서비스 endpoint Api Key정보 ")]
+        [Description("ML모델 서비스 endpoint ApiKey 정보 ")]
         public InArgument<string> ApiKey { get; set; }
 
         ExtractorResult result;

@@ -15,7 +15,7 @@ using UiPath.OCR.Contracts;
 
 namespace SampleActivities.Basic.OCR
 {
-    internal static class OCRResultHelper
+    internal static class ClovaOCRResultHelper
     {
         internal class RequestBody
         {

@@ -54,18 +54,16 @@ namespace SampleActivities.Basic.OCR
         {
             OCRResult ocrResult = new OCRResult();
             var client = new UiPathHttpClient(options["endpoint"].ToString());
-            var reqBody = new RequestBody();
-#if DEBUG
-            Console.WriteLine(reqBody.ToString());
-            Console.WriteLine(JsonConvert.SerializeObject(reqBody));
-#endif
 
             client.AddField("key", options["apikey"].ToString());
+            client.AddField("file_format", "image");
             client.AddField("request_id", Guid.NewGuid().ToString());
             client.AddField("file_url", string.Empty);
             client.AddField("file_bytes", string.Empty);
             client.AddFile(file_path, "file_upload");
-
+#if DEBUG
+            Console.WriteLine($"key: {options["apikey"].ToString()}");
+#endif
             var resp = await client.Upload();
 #if DEBUG
             System.Console.WriteLine(resp.status + " == > " + (resp.body.Length > 100 ? resp.body.Substring(0, 100) : resp.body));
@@ -117,30 +115,5 @@ namespace SampleActivities.Basic.OCR
             }
             return ocrResult;
         }
-
-
-        internal static PointF[] reducePolygonPoints ( string word, int idx,  PointF [] points,  OCRRotation rot)
-        {
-            var x = points[0].X;
-            var y = points[0].Y;
-            var w = Math.Abs(points[1].X - x);
-            var h = Math.Abs(points[1].Y - y);
-            var y2 = points[3].Y;
-            var x2 = points[3].X;
-
-            float dx = w / word.Length;
-            float dy = h / word.Length;
-
-            if( rot == OCRRotation.Rotated90)
-                return new[] { new PointF(x, y - dy * idx), new PointF(x, y - dy * (idx + 1)), new PointF(x2, y - dy * (idx + 1)), new PointF(x2, y - dy * idx) };
-            else if ( rot == OCRRotation.Rotated270 )
-                return new[] { new PointF(x, y + dy * idx), new PointF(x, y + dy * (idx + 1)), new PointF(x2, y + dy * (idx + 1)), new PointF(x2, y + dy * idx) };
-            else if( rot == OCRRotation.Rotated180)
-                return new[] { new PointF(x - dx * idx, y), new PointF(x - dx * (idx + 1), y), new PointF(x - dx * (idx + 1), y2), new PointF(x - dx * idx, y2) };
-            else
-                return new[] { new PointF(x + dx * idx, y), new PointF(x + dx * (idx + 1), y), new PointF(x + dx * (idx + 1), y2), new PointF(x + dx * idx, y2) };
-
-        }
-
     }
 }
