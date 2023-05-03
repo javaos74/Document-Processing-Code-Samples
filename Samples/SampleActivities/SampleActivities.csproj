@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Basic\DataExtraction\ClovaIDCardDesigner.xaml.cs" />
+    <Compile Remove="Basic\OCR\ClovaGeneralOCR.cs" />
     <Compile Remove="Basic\OCR\SimpleOCREngine.cs" />
     <Compile Remove="Basic\OCR\SimpleOCRScrape.cs" />
     <Compile Remove="Basic\OCR\SimpleOCRScrapeFactory.cs" />
