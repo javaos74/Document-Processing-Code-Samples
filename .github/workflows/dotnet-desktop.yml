@@ -81,7 +81,7 @@ jobs:
     - name: Setup Nuget
       uses: Nuget/setup-nuget@v1.0.5
 
-    - name: Restore nuget packages
+    - name: Update nuget feeds 
       run: nuget.exe sources Samples\.nuget\NuGet.config
       
     - name: Restore nuget packages
@@ -93,5 +93,7 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-
+    - name: Check built package 
+      run: dir Output\Packages\*.nupkg
+      
 
