@@ -202,12 +202,7 @@ namespace SampleActivities.Basic.DataExtraction
                         
                         else if( du_field.Type == FieldType.Table)
                         {
-                           // int j = 0;
-                           // foreach (DocumentField az_item in out_az_field.Value.AsList())
-                            {
-                                resultsDataPoints.Add(CreateTableFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
-                           //     j++;
-                            }
+                            resultsDataPoints.Add(CreateTableFieldDataPoint(du_field, out_az_field, dom, pages.ToArray()));
                         }
                     }
                 }
@@ -263,12 +258,6 @@ namespace SampleActivities.Basic.DataExtraction
                                                                     new[] { CreateRowResultsValue(i++, c, dom, az_item_dictionary, pages.ToArray()) }));
                         confidence = Math.Min(confidence, (float)az_item.Confidence);
                         rows.Add(row);
-
-                        /*foreach(ResultsDataPoint rp in row)
-                        {
-                            var result = rp.GetValue();
- 
-                        }*/
                     }
                 }
             }
@@ -345,7 +334,7 @@ namespace SampleActivities.Basic.DataExtraction
             if (!az_item_dictionary.TryGetValue(du_item.FieldId, out DocumentField az_item))
                 return null;
 
-            float ocr_confidence = 0f;
+            float ocr_confidence = 1.0f;
             Rectangle rect = new Rectangle((Int32)az_item.BoundingRegions[0].BoundingPolygon[0].X - 2,
                       (Int32)az_item.BoundingRegions[0].BoundingPolygon[0].Y - 2,
                       (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[1].X - az_item.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
@@ -364,7 +353,7 @@ namespace SampleActivities.Basic.DataExtraction
 #if DEBUG
                 Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
 #endif
-                ocr_confidence += w.OcrConfidence;
+                ocr_confidence = Math.Min(ocr_confidence, w.OcrConfidence);
             }
 #if DEBUG
             Console.WriteLine($"{boxes.Count} is found");
@@ -379,7 +368,7 @@ namespace SampleActivities.Basic.DataExtraction
                                 (float)dom.Pages[az_item.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
             var reference = new ResultsContentReference(az_item.Spans[0].Index, az_item.Spans[0].Length, tokens.ToArray());
 
-            ResultsValue rv = new ResultsValue(az_item.Content, reference, (float)az_item.Confidence, (float)ocr_confidence / boxes.Count);
+            ResultsValue rv = new ResultsValue(az_item.Content, reference, (float)az_item.Confidence, (float)ocr_confidence);
 
             if(du_item.Type == FieldType.Number)
             {
@@ -393,85 +382,42 @@ namespace SampleActivities.Basic.DataExtraction
 
         private static ResultsValue CreateResultsValue(int wordIndex, Document dom, DocumentField az_field, PageLayout[] pages)
         {
-            float ocr_confidence = 0f;
+            float ocr_confidence = 1.0f;
             Rectangle rect;
-            /*if (az_field.FieldType == DocumentFieldType.List)
+            rect = new Rectangle((Int32)az_field.BoundingRegions[0].BoundingPolygon[0].X - 2,
+                              (Int32)az_field.BoundingRegions[0].BoundingPolygon[0].Y - 2,
+                              (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[1].X - az_field.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
+                              (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[2].Y - az_field.BoundingRegions[0].BoundingPolygon[0].Y) * 1.1));
+
+            var words = dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
+                .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
+
+#if DEBUG
+            Console.WriteLine($"{words.Length} words found");
+#endif
+            List<Box> boxes = new List<Box>();
+            List<ResultsValueTokens> tokens = new List<ResultsValueTokens>();
+            foreach (var w in words)
             {
-                DocumentField az_field2 = (DocumentField)az_field.Value.AsList();
-                {
-                    rect = new Rectangle((Int32)az_field2.BoundingRegions[0].BoundingPolygon[0].X - 2,
-                                  (Int32)az_field2.BoundingRegions[0].BoundingPolygon[0].Y - 2,
-                                  (Int32)(Math.Abs(az_field2.BoundingRegions[0].BoundingPolygon[1].X - az_field2.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
-                                  (Int32)(Math.Abs(az_field2.BoundingRegions[0].BoundingPolygon[2].Y - az_field2.BoundingRegions[0].BoundingPolygon[0].Y) * 1.1));
-
-                    var words = dom.Pages[az_field2.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
-                        .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
-
+                boxes.Add(w.Box);
 #if DEBUG
-                    Console.WriteLine($"{words.Length} words found");
+                Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
 #endif
-                    List<Box> boxes = new List<Box>();
-                    List<ResultsValueTokens> tokens = new List<ResultsValueTokens>();
-                    foreach (var w in words)
-                    {
-                        boxes.Add(w.Box);
-#if DEBUG
-                        Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
-#endif
-                        ocr_confidence += w.OcrConfidence;
-                    }
-#if DEBUG
-                    Console.WriteLine($"{boxes.Count} is found");
-#endif
-                    if (boxes.Count == 0)
-                    {
-                        boxes.Add(Box.CreateChecked(0, 0, 0, 0));
-                    }
-                    tokens.Add(new ResultsValueTokens(az_field2.Spans[0].Index, az_field2.Spans[0].Length,
-                                        az_field.BoundingRegions[0].PageNumber - 1,
-                                        (float)dom.Pages[az_field2.BoundingRegions[0].PageNumber - 1].Size.Width,
-                                        (float)dom.Pages[az_field2.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
-                    var reference = new ResultsContentReference(az_field2.Spans[0].Index, az_field2.Spans[0].Length, tokens.ToArray());
-                    return new ResultsValue(az_field2.Content, reference, (float)az_field2.Confidence, (float)ocr_confidence / boxes.Count); // word.OcrConfidence);
-                }
+                ocr_confidence = Math.Min( ocr_confidence, w.OcrConfidence);
             }
-            else*/
+#if DEBUG
+            Console.WriteLine($"{boxes.Count} is found");
+#endif
+            if (boxes.Count == 0)
             {
-                rect = new Rectangle((Int32)az_field.BoundingRegions[0].BoundingPolygon[0].X - 2,
-                                  (Int32)az_field.BoundingRegions[0].BoundingPolygon[0].Y - 2,
-                                  (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[1].X - az_field.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
-                                  (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[2].Y - az_field.BoundingRegions[0].BoundingPolygon[0].Y) * 1.1));
-
-                var words = dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
-                    .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
-
-#if DEBUG
-                Console.WriteLine($"{words.Length} words found");
-#endif
-                List<Box> boxes = new List<Box>();
-                List<ResultsValueTokens> tokens = new List<ResultsValueTokens>();
-                foreach (var w in words)
-                {
-                    boxes.Add(w.Box);
-#if DEBUG
-                    Console.WriteLine($"Box : {w.Box.Left}, {w.Box.Top}, {w.Box.Width}, {w.Box.Height}");
-#endif
-                    ocr_confidence += w.OcrConfidence;
-                }
-#if DEBUG
-                Console.WriteLine($"{boxes.Count} is found");
-#endif
-                if (boxes.Count == 0)
-                {
-                    boxes.Add(Box.CreateChecked(0, 0, 0, 0));
-                }
-                tokens.Add(new ResultsValueTokens(az_field.Spans[0].Index, az_field.Spans[0].Length,
-                                    az_field.BoundingRegions[0].PageNumber - 1,
-                                    (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Width,
-                                    (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
-                var reference = new ResultsContentReference(az_field.Spans[0].Index, az_field.Spans[0].Length, tokens.ToArray());
-                return new ResultsValue(az_field.Content, reference, (float)az_field.Confidence, (float)ocr_confidence / boxes.Count); // word.OcrConfidence);
+                boxes.Add(Box.CreateChecked(0, 0, 0, 0));
             }
+            tokens.Add(new ResultsValueTokens(az_field.Spans[0].Index, az_field.Spans[0].Length,
+                                az_field.BoundingRegions[0].PageNumber - 1,
+                                (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Width,
+                                (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
+            var reference = new ResultsContentReference(az_field.Spans[0].Index, az_field.Spans[0].Length, tokens.ToArray());
+            return new ResultsValue(az_field.Content, reference, (float)az_field.Confidence, (float)ocr_confidence / boxes.Count); // word.OcrConfidence);
         }
 
         private static double ConvertSize(double curX, double curWidth, double baseWidth)

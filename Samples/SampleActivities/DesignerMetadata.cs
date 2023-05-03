@@ -19,7 +19,7 @@ namespace SampleActivities
 //            var clovaIDCardDesigner = new DesignerAttribute(typeof(ClovaIDCardDesigner));
 
             //Categories
-            var classifierCategoryAttribute = new CategoryAttribute("DU Extension Classifiers");
+            //var classifierCategoryAttribute = new CategoryAttribute("DU Extension Classifiers");
             var extractorCategoryAttribute = new CategoryAttribute("DU Extension Extractors");
             var ocrCategoryAttribute = new CategoryAttribute("DU Extension OCR Engines");
 
@@ -34,6 +34,7 @@ namespace SampleActivities
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(HancomOCREngine), ocrCategoryAttribute);
+
             builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));
             builder.AddCustomAttributes(typeof(HancomOCREngine), nameof(HancomOCREngine.Result), new CategoryAttribute("Output"));
 
