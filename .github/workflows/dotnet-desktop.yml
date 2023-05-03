@@ -78,10 +78,15 @@ jobs:
         vs-version: '17.5'
         msbuild-architecture: x64
 
+    - name: Setup Nuget
+      uses: Nuget/setup-nuget@v1.0.5
 
+    - name: Restore nuget packages
+      run: nuget restore Samples\SampleActivities\SampleActivities.csproj
+      
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Build the application
-      run: msbuild Samples\SampleActivities\SampleActivities.csproj -t:restore -verbosity:diag -property:Configuration=$env:Configuration
+      run: msbuild Samples\SampleActivities\SampleActivities.csproj -t:rebuild -verbosity:diag -property:Configuration=$env:Configuration
       env:
         Configuration: ${{ matrix.configuration }}
 
