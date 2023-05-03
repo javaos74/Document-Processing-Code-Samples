@@ -82,7 +82,10 @@ jobs:
       uses: Nuget/setup-nuget@v1.0.5
 
     - name: Restore nuget packages
-      run: nuget restore Samples\Samples.sln
+      run: nuget.exe sources Samples\.nuget\NuGet.config
+      
+    - name: Restore nuget packages
+      run: nuget.exe restore Samples\Samples.sln
       
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Build the application
