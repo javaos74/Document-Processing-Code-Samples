@@ -417,7 +417,7 @@ namespace SampleActivities.Basic.DataExtraction
                                 (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Width,
                                 (float)dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Size.Height, boxes.ToArray()));
             var reference = new ResultsContentReference(az_field.Spans[0].Index, az_field.Spans[0].Length, tokens.ToArray());
-            return new ResultsValue(az_field.Content, reference, (float)az_field.Confidence, (float)ocr_confidence / boxes.Count); // word.OcrConfidence);
+            return new ResultsValue(az_field.Content, reference, (float)az_field.Confidence, (float)ocr_confidence);
         }
 
         private static double ConvertSize(double curX, double curWidth, double baseWidth)

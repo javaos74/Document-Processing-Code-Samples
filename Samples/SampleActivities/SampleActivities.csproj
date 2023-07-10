@@ -14,7 +14,7 @@
 	<Description>UiPath Document Understanding Custom DU Activities.</Description>
 	<PackageOutputPath>$(ProjectDir)..\Output\Packages</PackageOutputPath>
 	<GeneratePackageOnBuild Condition="'$(Configuration)' == 'Debug'">true</GeneratePackageOnBuild>
-	<GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">false</GeneratePackageOnBuild>
+	<GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
 	<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
 
@@ -22,7 +22,7 @@
 	<Product>CustomDUActivities</Product>
 	<VersionMajor>1</VersionMajor>
 	<VersionMinor>0</VersionMinor>
-	<VersionBuild>0</VersionBuild>
+	<VersionBuild>1</VersionBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -31,6 +31,11 @@
 	<VersionPrefix>$(VersionMajor).$(VersionMinor).$(VersionBuild)-dev.$(VersionRevision)</VersionPrefix>
 	<AssemblyVersion>$(VersionMajor).$(VersionMinor).$(VersionBuild).$(VersionRevision)</AssemblyVersion>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <AssemblyVersion>$(VersionMajor).$(VersionMinor).$(VersionBuild)</AssemblyVersion>
+  </PropertyGroup>
+    
 
   <PropertyGroup Condition="'$(TargetFramework)' != 'net6.0'">
 	<UseWPF>true</UseWPF>
@@ -74,5 +79,7 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(ConfigurationName)' == 'Debug' ">
 	<Exec Command="if exist &quot;$(SolutionDir)Output\Packages\$(PackageId).*&quot; del &quot;$(SolutionDir)Output\Packages\$(PackageId).*&quot;" />
   </Target>
-
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(ConfigurationName)' == 'Release' ">
+    <Exec Command="if exist &quot;$(SolutionDir)Output\Packages\$(PackageId).*&quot; del &quot;$(SolutionDir)Output\Packages\$(PackageId).*&quot;" />
+  </Target>
 </Project>

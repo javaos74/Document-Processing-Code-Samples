@@ -1,6 +1,8 @@
-﻿using System.Activities;
+﻿using System;
+using System.Activities;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,14 +34,22 @@ namespace SampleActivities.Basic.OCR
         [Description("설정 가능한 언어값은 ko ja zh-TW 중 하나를 선택")]
         public InArgument<string> Languages { get; set; } = "ko";
 
+        [Category("Option")]
+        [Browsable(true)]
+        [Description("표 추출 옵션")]
+        public InArgument<Boolean> enableTableDetection { get; set; } = false;
+
 
         [Category("Output")]
         [Browsable(true)]
         public override OutArgument<string> Text { get => base.Text; set => base.Text = value; }
 
+        [Category("InOutput")]
+        [Browsable(true)]
+        public InOutArgument<DataSet> DataSet { get; set; }
 
         private string file_path;
-
+        private DataSet dataSet;
 
         /**
          * OCRENgine으로 동작하는데 필요한 함수 구현 
@@ -66,6 +76,7 @@ namespace SampleActivities.Basic.OCR
 
             var result =   ClovaOCRResultHelper.FromClovaClient(file_path, options);
 
+            dataSet = (DataSet)options["dataset"];
             return result;
         }
 
@@ -74,8 +85,8 @@ namespace SampleActivities.Basic.OCR
          */
         protected override void OnSuccess(CodeActivityContext context, OCRResult result)
         {
-
-;       }
+            DataSet.Set(context, dataSet);
+        }
         //protected override void on
 
         protected override Dictionary<string, object> BeforeExecute(CodeActivityContext context)
@@ -84,7 +95,9 @@ namespace SampleActivities.Basic.OCR
             {
                 { "endpoint",  Endpoint.Get(context) },
                 { "secret", Secret.Get(context) },
-                { "lang", Languages.Get(context) }
+                { "lang", Languages.Get(context) },
+                { "enableTableDetection", enableTableDetection.Get(context) },
+                { "dataset",  DataSet.Get(context) }
             };
         }
     }

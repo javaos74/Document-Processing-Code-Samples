@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UiPath.OCR.Contracts.DataContracts;
 using UiPath.OCR.Contracts;
+using System.Data;
 //using BitMiracle.Docotic.Pdf;
 
 namespace SampleActivities.Basic.OCR
@@ -24,6 +25,7 @@ namespace SampleActivities.Basic.OCR
             public string timestamp { get; set; } = System.DateTime.Now.Ticks.ToString();
             public string lang { get; set; } = "ko"; // default 
 
+            public Boolean enableTableDetection { get; set; } = false;
             public List<RequestImage> images { get; set; } = new List<RequestImage>();
 
             public override string ToString()
@@ -90,6 +92,7 @@ namespace SampleActivities.Basic.OCR
             Console.WriteLine(reqBody.ToString());
 #endif
             reqBody.lang = options["lang"].ToString();
+            reqBody.enableTableDetection = Boolean.Parse(options["enableTableDetection"].ToString());
 #if DEBUG
             Console.WriteLine(JsonConvert.SerializeObject(reqBody));
 #endif
@@ -130,6 +133,104 @@ namespace SampleActivities.Basic.OCR
                 {
                     sb.Append((string)blk["inferText"]);
                     sb.Append(((Boolean)blk["lineBreak"]) ? Environment.NewLine : " ");
+                }
+
+                if (reqBody.enableTableDetection)
+                {
+                    JArray tables = (JArray)respJson["images"][0]["tables"];
+                    DataSet dset = (DataSet)options["dataset"];
+                    if (tables != null)
+                    {
+                        if (dset == null)
+                        {
+                            dset = new DataSet();
+                            options["dataset"] = dset;
+                        }
+                        int nameIdx = 1;
+                        long tblIdx = System.DateTime.Now.Ticks % 1000000000;
+
+                        int maxRowCount = 0, maxColCount = 0;
+                        foreach (JObject tab in tables)
+                        {
+                            JArray _cells = (JArray)tab["cells"];
+
+                            foreach (JObject _cell in _cells)
+                            {
+                                if ((int)_cell["rowIndex"] > maxRowCount)
+                                    maxRowCount = (int)_cell["rowIndex"];
+                                if ((int)_cell["columnIndex"] > maxColCount)
+                                    maxColCount = (int)_cell["columnIndex"];
+                            }
+                        }
+                        String[,] tblArray = new String[maxRowCount + 1, maxColCount + 1];
+
+                        foreach (JObject tab in tables)
+                        {
+                            DataTable tbl = new DataTable($"tbl_{tblIdx}");
+                            JArray cells = (JArray)tab["cells"];
+                            int rowIdx = 0, colIdx = 0;
+
+                            foreach (JObject cell in cells)
+                            {
+                                rowIdx = (int)cell["rowIndex"];
+                                colIdx = (int)cell["columnIndex"];
+                                StringBuilder sbtext = new StringBuilder();
+                                JArray textlines = (JArray)cell["cellTextLines"];
+                                foreach (JObject line in textlines)
+                                {
+                                    JArray words = (JArray)line["cellWords"];
+                                    foreach (JObject word in words)
+                                    {
+                                        sbtext.Append(word["inferText"] + " ");
+                                    }
+                                    if (sbtext.Length > 0)
+                                        sbtext.Remove(sbtext.Length - 1, 1).Append("\n");
+                                }
+                                if (sbtext.Length > 0)
+                                    sbtext.Remove(sbtext.Length - 1, 1);
+                                tblArray[rowIdx, colIdx] = sbtext.ToString().Trim();
+                            }
+                            for (int c = 0; c <= maxColCount; c++)
+                            {
+                                try
+                                {
+                                    tbl.Columns.Add(new DataColumn(tblArray[0, c], Type.GetType("System.String")));
+                                }
+                                catch (DuplicateNameException dne)
+                                {
+                                    nameIdx++;
+                                    tbl.Columns.Add(new DataColumn(tblArray[0, c] + nameIdx.ToString(), Type.GetType("System.String")));
+                                }
+                            }
+                            for (int r = 1; r <= maxRowCount; r++)
+                            {
+                                List<String> val = new List<String>();
+                                for (int c = 0; c <= maxColCount; c++)
+                                {
+                                    if (tblArray[r, c] != null)
+                                    {
+                                        val.Add(tblArray[r, c]);
+                                    }
+                                    else
+                                    {
+                                        val.Add(String.Empty);
+                                    }
+                                }
+                                tbl.Rows.Add(val.ToArray());
+                            }
+                            try
+                            {
+                                dset.Tables.Add(tbl);
+                            } 
+                            catch (DuplicateNameException dne)
+                            {
+                                tbl.TableName = $"tbl_{System.DateTime.Now.Ticks % 1000000000 + 1}";
+                                dset.Tables.Add(tbl);
+                            }
+                        }
+                        //update 
+                        options["dataset"] = dset;
+                    }
                 }
 
                 foreach (var word in ocrResult.Words)
