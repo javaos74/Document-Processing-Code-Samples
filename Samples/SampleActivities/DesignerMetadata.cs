@@ -4,6 +4,7 @@ using System.ComponentModel;
 using SampleActivities.Basic.DataExtraction;
 using SampleActivities.Basic.DocumentClassification;
 using SampleActivities.Basic.OCR;
+using SampleActivities.Basic.Speech;
 
 namespace SampleActivities
 {
@@ -22,6 +23,7 @@ namespace SampleActivities
             //var classifierCategoryAttribute = new CategoryAttribute("DU Extension Classifiers");
             var extractorCategoryAttribute = new CategoryAttribute("DU Extension Extractors");
             var ocrCategoryAttribute = new CategoryAttribute("DU Extension OCR Engines");
+            var clovaSpeechiCategoryAttribute = new CategoryAttribute("Clova Speech");
 
             //builder.AddCustomAttributes(typeof(SimpleClassifier), classifierCategoryAttribute);
             //builder.AddCustomAttributes(typeof(SimpleClassifier), simpleClassifierDesigner);
@@ -37,6 +39,9 @@ namespace SampleActivities
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));
             builder.AddCustomAttributes(typeof(HancomOCREngine), nameof(HancomOCREngine.Result), new CategoryAttribute("Output"));
+
+            builder.AddCustomAttributes(typeof(ClovaSpeech), clovaSpeechiCategoryAttribute);
+            builder.AddCustomAttributes(typeof(ClovaSpeech), nameof(ClovaSpeech.FullText), new CategoryAttribute("Output"));
 
             MetadataStore.AddAttributeTable(builder.CreateTable());
         }

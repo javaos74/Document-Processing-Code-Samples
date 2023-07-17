@@ -12,12 +12,31 @@ using System.Activities;
 
 namespace SampleActivities.Basic.OCR
 {
-    public class ClovaOCRPair
+    public class ClovaResponse
     {
         public HttpStatusCode status { get; set; }
         public string body { get; set; }
     }
+    internal class ClovaSpeechParamBoosting
+    {
+        public ClovaSpeechParamBoosting( string w) {
+            this.words = w;
+        }
 
+        public string words { get; set; }
+    }
+    internal class ClovaSpeechParam
+    {
+        public string language { get; set; } = "ko-KR";
+        public string completion { get; set; } = "sync";
+        public bool wordAlignment { get; set; } = false;
+        public bool fullText { get; set; } = true;
+        public bool resultToObs { get; set; } = false;
+        public bool noiseFiltering { get; set; } = true;
+        public ClovaSpeechParamBoosting[] boostings { get; set; }
+        public bool useDomainBoostings { get; set; } = false;
+        public string forbiddens { get; set; }
+    }
     public class UiPathHttpClient
     {
 
@@ -41,10 +60,17 @@ namespace SampleActivities.Basic.OCR
         }
         public void setSecret( string secret)
         {
-            this.client.DefaultRequestHeaders.Add("X-OCR-SECRET", secret);
-            //this.client.DefaultRequestHeaders.Add("Content-Type", "application/json");
+            setOCRSecret(secret);
         }
-
+        public void setOCRSecret(string secret)
+        {
+            this.client.DefaultRequestHeaders.Add("X-OCR-SECRET", secret);
+        }
+        public void setSpeechSecret(string secret)
+        {
+            this.client.DefaultRequestHeaders.Add("X-CLOVASPEECH-API-KEY", secret);
+        }
+        /*
         public void AddFile(string fileName)
         {
             var fstream = System.IO.File.OpenRead(fileName);
@@ -61,8 +87,9 @@ namespace SampleActivities.Basic.OCR
 
             this.content.Add(new StreamContent(new MemoryStream(buf)), "file", System.IO.Path.GetFileNameWithoutExtension(fileName));
         }
+        */
 
-        public void AddFile(string fileName, string fieldName)
+        public void AddFile(string fileName, string fieldName = "file")
         {
             var fstream = System.IO.File.OpenRead(fileName);
             byte[] buf = new byte[fstream.Length];
@@ -91,14 +118,14 @@ namespace SampleActivities.Basic.OCR
             this.content = new MultipartFormDataContent("clova----" + DateTime.Now.ToString(CultureInfo.InvariantCulture));
         }
 
-        public async Task<ClovaOCRPair> Upload()
+        public async Task<ClovaResponse> Upload()
         {
 #if DEBUG
             Console.WriteLine("http content count :" + this.content.Count());
 #endif
             using (var message = this.client.PostAsync(this.url, this.content))
             {
-                ClovaOCRPair resp = new ClovaOCRPair();
+                ClovaResponse resp = new ClovaResponse();
                 resp.status = message.Result.StatusCode;
                 resp.body = await message.Result.Content.ReadAsStringAsync();
                 return resp;
