@@ -22,7 +22,7 @@
 	<Product>CustomDUActivities</Product>
 	<VersionMajor>1</VersionMajor>
 	<VersionMinor>0</VersionMinor>
-	<VersionBuild>1</VersionBuild>
+	<VersionBuild>3</VersionBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -33,6 +33,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <VersionPrefix>$(VersionMajor).$(VersionMinor).$(VersionBuild)</VersionPrefix>
     <AssemblyVersion>$(VersionMajor).$(VersionMinor).$(VersionBuild)</AssemblyVersion>
   </PropertyGroup>
     
