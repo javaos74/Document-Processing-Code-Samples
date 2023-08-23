@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Globalization;
 using System.IO;
 using System.Activities;
+using System.Net.Sockets;
 
 namespace SampleActivities.Basic.OCR
 {
@@ -48,7 +49,7 @@ namespace SampleActivities.Basic.OCR
         {
             this.url = endpoint;
             this.client = new HttpClient();
-            this.content = new MultipartFormDataContent("clova----" + DateTime.Now.ToString(CultureInfo.InvariantCulture));
+            this.content = new MultipartFormDataContent("ocr----" + DateTime.Now.Ticks.ToString());
         }
 
         public void setEndpoint( string endpoint)
@@ -70,28 +71,19 @@ namespace SampleActivities.Basic.OCR
         {
             this.client.DefaultRequestHeaders.Add("X-CLOVASPEECH-API-KEY", secret);
         }
-        /*
-        public void AddFile(string fileName)
+        public void setAuthorizationToken(string token)
         {
-            var fstream = System.IO.File.OpenRead(fileName);
-            byte[] buf = new byte[fstream.Length];
-            int read_bytes = 0;
-            int offset = 0;
-            int remains = (int)fstream.Length;
-            do {
-                read_bytes += fstream.Read(buf, offset, remains);
-                offset += read_bytes;
-                remains -= read_bytes;
-            } while (remains != 0);
-            fstream.Close();
-
-            this.content.Add(new StreamContent(new MemoryStream(buf)), "file", System.IO.Path.GetFileNameWithoutExtension(fileName));
+            this.client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            this.client.DefaultRequestHeaders.Add("Accept", "*/*");
+            //this.client.DefaultRequestHeaders.Add("User-Agent", "dotnet/1.0.0");
         }
-        */
 
         public void AddFile(string fileName, string fieldName = "file")
         {
             var fstream = System.IO.File.OpenRead(fileName);
+#if DEBUG
+            Console.WriteLine($"file size: {fstream.Length}");
+#endif
             byte[] buf = new byte[fstream.Length];
             int read_bytes = 0;
             int offset = 0;
@@ -106,7 +98,7 @@ namespace SampleActivities.Basic.OCR
 
             this.content.Add(new StreamContent(new MemoryStream(buf)), fieldName, System.IO.Path.GetFileName(fileName));
         }
-
+ 
         public void AddField( string name, string value)
         {
             this.content.Add(new StringContent(value), name);
@@ -115,7 +107,7 @@ namespace SampleActivities.Basic.OCR
         public void Clear()
         {
             this.content.Dispose();
-            this.content = new MultipartFormDataContent("clova----" + DateTime.Now.ToString(CultureInfo.InvariantCulture));
+            this.content = new MultipartFormDataContent("ocr----" + DateTime.Now.Ticks.ToString());
         }
 
         public async Task<ClovaResponse> Upload()

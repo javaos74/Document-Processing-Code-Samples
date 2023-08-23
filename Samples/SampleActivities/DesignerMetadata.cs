@@ -36,9 +36,11 @@ namespace SampleActivities
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(HancomOCREngine), ocrCategoryAttribute);
+            builder.AddCustomAttributes(typeof(UpstageOCREngine), ocrCategoryAttribute);
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));
             builder.AddCustomAttributes(typeof(HancomOCREngine), nameof(HancomOCREngine.Result), new CategoryAttribute("Output"));
+            builder.AddCustomAttributes(typeof(UpstageOCREngine), nameof(UpstageOCREngine.Result), new CategoryAttribute("Output"));
 
             builder.AddCustomAttributes(typeof(ClovaSpeech), clovaSpeechiCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaSpeech), nameof(ClovaSpeech.FullText), new CategoryAttribute("Output"));
