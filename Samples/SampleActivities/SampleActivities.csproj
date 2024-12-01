@@ -57,6 +57,12 @@
 	  <PackageReference Include="System.Activities.Metadata" Version="6.0.0-20220318.2" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Basic\XPlatform\**" />
+    <EmbeddedResource Remove="Basic\XPlatform\**" />
+    <None Remove="Basic\XPlatform\**" />
+    <Page Remove="Basic\XPlatform\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="Basic\DataExtraction\ClovaIDCardDesigner.xaml.cs" />
     <Compile Remove="Basic\OCR\ClovaGeneralOCR.cs" />
     <Compile Remove="Basic\OCR\SimpleOCREngine.cs" />
@@ -73,8 +79,8 @@
     <PackageReference Include="Azure.AI.FormRecognizer" Version="4.0.0" />
     <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.18.0" />
     <PackageReference Include="UiPath.OCR.Contracts" Version="2.14.0" />
-    <PackageReference Include="UiPath.Activities.Contracts" Version="23.4.1"/>
-	<PackageReference Include="UiPath.UiAutomation.Activities" Version="23.4.1"/>
+    <PackageReference Include="UiPath.Activities.Contracts" Version="23.4.1" />
+	<PackageReference Include="UiPath.UiAutomation.Activities" Version="23.4.2" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(ConfigurationName)' == 'Debug' ">

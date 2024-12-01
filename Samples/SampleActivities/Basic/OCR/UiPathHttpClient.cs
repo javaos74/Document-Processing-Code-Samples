@@ -18,6 +18,11 @@ namespace SampleActivities.Basic.OCR
         public HttpStatusCode status { get; set; }
         public string body { get; set; }
     }
+    public class UpstageResponse
+    {
+        public HttpStatusCode status { get; set; }
+        public string body { get; set; }
+    }
     internal class ClovaSpeechParamBoosting
     {
         public ClovaSpeechParamBoosting( string w) {
@@ -118,6 +123,20 @@ namespace SampleActivities.Basic.OCR
             using (var message = this.client.PostAsync(this.url, this.content))
             {
                 ClovaResponse resp = new ClovaResponse();
+                resp.status = message.Result.StatusCode;
+                resp.body = await message.Result.Content.ReadAsStringAsync();
+                return resp;
+            }
+        }
+
+        public async Task<UpstageResponse> UploadUpstage()
+        {
+#if DEBUG
+            Console.WriteLine("http content count :" + this.content.Count());
+#endif
+            using (var message = this.client.PostAsync(this.url, this.content))
+            {
+                UpstageResponse resp = new UpstageResponse();
                 resp.status = message.Result.StatusCode;
                 resp.body = await message.Result.Content.ReadAsStringAsync();
                 return resp;
