@@ -240,42 +240,6 @@ namespace SampleActivities.Basic.DataExtraction
             extractorResult.DataPoints = resultsDataPoints.ToArray();
             return extractorResult;
         }
-        private static ResultsDataPoint CreateTableFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages)
-        {
-            int i = 0;
-            float confidence = 1.0f;
-            List<ResultsDataPoint> dataPoints = new List<ResultsDataPoint>();
-            List<IEnumerable<ResultsDataPoint>> rows = new List<IEnumerable<ResultsDataPoint>>();
-            if (az_field.FieldType == DocumentFieldType.List)
-            {
-                foreach (DocumentField az_item in az_field.Value.AsList())
-                {
-                    if (az_item.FieldType == DocumentFieldType.Dictionary)
-                    {
-                        IReadOnlyDictionary<string, DocumentField> az_item_dictionary = az_item.Value.AsDictionary();
-
-                        var row = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type,
-                                                                    new[] { CreateRowResultsValue(i++, c, dom, az_item_dictionary, pages.ToArray()) }));
-                        confidence = Math.Min(confidence, (float)az_item.Confidence);
-                        rows.Add(row);
-                    }
-                }
-            }
-            //az_field.Value.AsList()[j]
-            foreach(DocumentField az_item in az_field.Value.AsList()) { 
-                var headerCells = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateResultsValue(i++, dom, az_item, pages) }));
-                dataPoints.AddRange(headerCells);
-            }
-
-            var tableValue = ResultsValue.CreateTableValue(du_field, dataPoints, rows.ToArray(), confidence, 0.0f);
-            return new ResultsDataPoint(
-                du_field.FieldId,
-                du_field.FieldName,
-                du_field.Type,
-                new[] { tableValue });
-        }
-
-
 
         private static ResultsDataPoint CreateTextFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages )
         {
@@ -327,7 +291,44 @@ namespace SampleActivities.Basic.DataExtraction
                 new[] { firstBooleanValue });
         }
 
-       
+        private static ResultsDataPoint CreateTableFieldDataPoint(Field du_field, DocumentField az_field, Document dom, PageLayout[] pages)
+        {
+            int i = 0;
+            float confidence = 1.0f;
+            DocumentField az_header_field = null;
+
+            List<IEnumerable<ResultsDataPoint>> rows = new List<IEnumerable<ResultsDataPoint>>();
+            if (az_field.FieldType == DocumentFieldType.List)
+            {
+                foreach (DocumentField az_item in az_field.Value.AsList())
+                {
+                    if (i == 0)
+                        az_header_field = az_item;
+
+                    if (az_item.FieldType == DocumentFieldType.Dictionary)
+                    {
+                        IReadOnlyDictionary<string, DocumentField> az_item_dictionary = az_item.Value.AsDictionary();
+
+                        var row = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type,
+                                                                    new[] { CreateRowResultsValue(i, c, dom, az_item_dictionary, pages.ToArray()) })).Where(c => c.Values[0] != null);
+
+                        confidence = Math.Min(confidence, (float)az_item.Confidence);
+                        rows.Add(row);
+                        i++;
+                    }
+                }
+            }
+
+            var headerCells = du_field.Components.Select(c => new ResultsDataPoint(c.FieldId, c.FieldName, c.Type, new[] { CreateRowResultsValue(i, c, dom, az_header_field.Value.AsDictionary(), pages) })).Where(c => c.Values[0] != null);
+
+            var tableValue = ResultsValue.CreateTableValue(du_field, headerCells, rows.ToArray(), confidence, 0.0f);
+
+            return new ResultsDataPoint(
+                du_field.FieldId,
+                du_field.FieldName,
+                du_field.Type,
+                new[] { tableValue });
+        }
 
         private static ResultsValue CreateRowResultsValue( int  rowIdx, Field du_item, Document dom, IReadOnlyDictionary<string, DocumentField> az_item_dictionary, PageLayout[] pages)
         {
@@ -335,10 +336,12 @@ namespace SampleActivities.Basic.DataExtraction
                 return null;
 
             float ocr_confidence = 1.0f;
-            Rectangle rect = new Rectangle((Int32)az_item.BoundingRegions[0].BoundingPolygon[0].X - 2,
-                      (Int32)az_item.BoundingRegions[0].BoundingPolygon[0].Y - 2,
-                      (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[1].X - az_item.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
-                      (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[2].Y - az_item.BoundingRegions[0].BoundingPolygon[0].Y) * 1.1));
+            float padding = 3f;
+            float weight = 1.2f;
+            Rectangle rect = new Rectangle((Int32)(az_item.BoundingRegions[0].BoundingPolygon[0].X - padding),
+                      (Int32)(az_item.BoundingRegions[0].BoundingPolygon[0].Y - padding),
+                      (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[1].X - az_item.BoundingRegions[0].BoundingPolygon[0].X) * weight),
+                      (Int32)(Math.Abs(az_item.BoundingRegions[0].BoundingPolygon[2].Y - az_item.BoundingRegions[0].BoundingPolygon[0].Y) * weight));
 
             var words = dom.Pages[az_item.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
                 .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
@@ -370,10 +373,17 @@ namespace SampleActivities.Basic.DataExtraction
 
             ResultsValue rv = new ResultsValue(az_item.Content, reference, (float)az_item.Confidence, (float)ocr_confidence);
 
-            if(du_item.Type == FieldType.Number)
+            if (du_item.Type == FieldType.Number)
             {
                 float _num = az_item.FieldType == DocumentFieldType.Double ? (float)az_item.Value.AsDouble() : float.Parse(az_item.Value.AsString());
                 var derivedFields = ResultsDerivedField.CreateDerivedFieldsForNumber(_num);
+                rv.DerivedFields = derivedFields;
+            }
+
+            if (du_item.Type == FieldType.Date)
+            {
+                DateTimeOffset _date = az_item.FieldType == DocumentFieldType.Date ? az_item.Value.AsDate() : DateTimeOffset.Parse(az_item.Content);
+                var derivedFields = ResultsDerivedField.CreateDerivedFieldsForDate(_date.Day, _date.Month, _date.Year);
                 rv.DerivedFields = derivedFields;
             }
 
@@ -383,11 +393,12 @@ namespace SampleActivities.Basic.DataExtraction
         private static ResultsValue CreateResultsValue(int wordIndex, Document dom, DocumentField az_field, PageLayout[] pages)
         {
             float ocr_confidence = 1.0f;
-            Rectangle rect;
-            rect = new Rectangle((Int32)az_field.BoundingRegions[0].BoundingPolygon[0].X - 2,
-                              (Int32)az_field.BoundingRegions[0].BoundingPolygon[0].Y - 2,
-                              (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[1].X - az_field.BoundingRegions[0].BoundingPolygon[0].X) * 1.1),
-                              (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[2].Y - az_field.BoundingRegions[0].BoundingPolygon[0].Y) * 1.1));
+            float padding = 3f;
+            float weight = 1.2f;
+            Rectangle rect = new Rectangle((Int32)(az_field.BoundingRegions[0].BoundingPolygon[0].X - padding),
+                                 (Int32)(az_field.BoundingRegions[0].BoundingPolygon[0].Y - padding),
+                                 (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[1].X - az_field.BoundingRegions[0].BoundingPolygon[0].X) * weight),
+                                 (Int32)(Math.Abs(az_field.BoundingRegions[0].BoundingPolygon[2].Y - az_field.BoundingRegions[0].BoundingPolygon[0].Y) * weight));
 
             var words = dom.Pages[az_field.BoundingRegions[0].PageNumber - 1].Sections.SelectMany(s => s.WordGroups)
                 .SelectMany(w => w.Words).Where(t => rect.Contains(new Rectangle((Int32)t.Box.Left, (Int32)t.Box.Top, (Int32)t.Box.Width, (Int32)t.Box.Height))).ToArray();
