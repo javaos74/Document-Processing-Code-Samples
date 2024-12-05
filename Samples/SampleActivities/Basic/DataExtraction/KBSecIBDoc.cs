@@ -216,7 +216,7 @@ namespace SampleActivities.Basic.DataExtraction
                     var found = blocks.Where( b => b["key"].ToString() == du_field.FieldId).ToList(); 
                     if( found.Count == 1 )
                     {
-#if DEBUG
+#if DEBUG2
                         Console.WriteLine( found.ElementAt(0).ToString() );
 #endif
                         KBSecField kb_field = JsonConvert.DeserializeObject<KBSecField>(found.ElementAt(0).ToString());
