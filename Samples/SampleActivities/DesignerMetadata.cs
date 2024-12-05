@@ -33,6 +33,8 @@ namespace SampleActivities
             builder.AddCustomAttributes(typeof(ClovaDriverLicenseExtractor), extractorCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaIDCardExtractor), extractorCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaBusinessLicenseExtractor), extractorCategoryAttribute);
+            builder.AddCustomAttributes(typeof(KBSecIBDoc), extractorCategoryAttribute);
+
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(HancomOCREngine), ocrCategoryAttribute);
