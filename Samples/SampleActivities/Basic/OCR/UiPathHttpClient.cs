@@ -54,6 +54,7 @@ namespace SampleActivities.Basic.OCR
         {
             this.url = endpoint;
             this.client = new HttpClient();
+            this.client.Timeout = new TimeSpan(0, 3, 0);
             this.content = new MultipartFormDataContent("ocr----" + DateTime.Now.Ticks.ToString());
         }
 

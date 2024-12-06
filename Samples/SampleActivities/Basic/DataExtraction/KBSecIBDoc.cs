@@ -249,7 +249,7 @@ namespace SampleActivities.Basic.DataExtraction
             {
                /* var tmp = dom.Pages[p].Sections.SelectMany(s => s.WordGroups)
                     .SelectMany(w => w.Words).ToList(); */
-                foreach( var sec in dom.Pages[p].Sections)
+                foreach( var sec in dom.Pages[p-1].Sections)
                 {
                     foreach (var wg in sec.WordGroups)
                     {
