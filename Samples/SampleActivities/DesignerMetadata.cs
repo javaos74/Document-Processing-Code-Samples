@@ -3,6 +3,7 @@ using System.Activities.Presentation.Metadata;
 using System.ComponentModel;
 using SampleActivities.Basic.DataExtraction;
 using SampleActivities.Basic.DocumentClassification;
+using SampleActivities.Basic.DocumentLayout;
 using SampleActivities.Basic.OCR;
 using SampleActivities.Basic.Speech;
 
@@ -39,10 +40,12 @@ namespace SampleActivities
             builder.AddCustomAttributes(typeof(ClovaOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(HancomOCREngine), ocrCategoryAttribute);
             builder.AddCustomAttributes(typeof(UpstageOCREngine), ocrCategoryAttribute);
+            builder.AddCustomAttributes(typeof(UpstageDocumentParser), ocrCategoryAttribute);
 
             builder.AddCustomAttributes(typeof(ClovaOCREngine), nameof(ClovaOCREngine.Result), new CategoryAttribute("Output"));
             builder.AddCustomAttributes(typeof(HancomOCREngine), nameof(HancomOCREngine.Result), new CategoryAttribute("Output"));
             builder.AddCustomAttributes(typeof(UpstageOCREngine), nameof(UpstageOCREngine.Result), new CategoryAttribute("Output"));
+            builder.AddCustomAttributes(typeof(UpstageDocumentParser), nameof(UpstageDocumentParser.FullText), new CategoryAttribute("Output"));
 
             builder.AddCustomAttributes(typeof(ClovaSpeech), clovaSpeechiCategoryAttribute);
             builder.AddCustomAttributes(typeof(ClovaSpeech), nameof(ClovaSpeech.FullText), new CategoryAttribute("Output"));

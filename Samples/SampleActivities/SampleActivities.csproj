@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net461;net6.0-windows7.0</TargetFrameworks>
+    <TargetFrameworks>net461;net6.0;net6.0-windows7.0</TargetFrameworks>
 	<Deterministic>false</Deterministic>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	<OutputPath>$(ProjectDir)..\Output\SampleActivities</OutputPath>
@@ -22,7 +22,7 @@
 	<Product>CustomDUActivities</Product>
 	<VersionMajor>1</VersionMajor>
 	<VersionMinor>0</VersionMinor>
-	<VersionBuild>4</VersionBuild>
+	<VersionBuild>5</VersionBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -49,6 +49,11 @@
 	<Reference Include="PresentationCore" />
 	<Reference Include="PresentationFramework" />
 	<Reference Include="System.Xaml" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+	  <PackageReference Include="UiPath.Workflow.Runtime" Version="6.0.0-20220401-03" PrivateAssets="All" />
+	  <PackageReference Include="UiPath.Workflow" Version="6.0.0-20220401-03" PrivateAssets="All" />
+	  <PackageReference Include="System.Activities.Metadata" Version="6.0.0-20220318.2" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0-windows7.0' ">
 	  <PackageReference Include="UiPath.Workflow.Runtime" Version="6.0.0-20220401-03" PrivateAssets="All" />
@@ -77,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Azure.AI.FormRecognizer" Version="4.0.0" />
+    <PackageReference Include="TextTableFormatter.NET" Version="2.0.1.2" />
     <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.18.0" />
     <PackageReference Include="UiPath.OCR.Contracts" Version="2.14.0" />
     <PackageReference Include="UiPath.Activities.Contracts" Version="23.4.1" />
